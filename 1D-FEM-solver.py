@@ -30,7 +30,6 @@ Continuous Galerkin: Test functions equal to basis functions
 """
 
 import numpy as np
-# from numpy.polynomial import Polynomial
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import sympy as sp
@@ -81,8 +80,6 @@ def define_basis_functions(mode):
     phi1 = lambda xi : xi
   elif mode == 2:
     # define as symbolic polynomial
-    # phi0 = Polynomial([1,-1],[0,1],[0,1])
-    # phi1 = Polynomial([0,1],[0,1],[0,1])
     xi = sp.symbols("xi")
     phi0 = 1 - xi
     phi1 = xi
@@ -130,25 +127,6 @@ def generate_element_matrix_symbolic(x_i, dx_i, D, a):
       s_elem[idx0,idx1] = integral.subs(xi,1)-integral.subs(xi,0) 
   return s_elem
 
-"""
-# Old, using numpy
-def generate_element_matrix_symbolic(x_i, dx_i, D, a):
-  # get basis functions
-  basis_functions = define_basis_functions(2) # mode set to symbolic
-  # calculate s_ij
-  s_elem = np.zeros((len(basis_functions),len(basis_functions)))
-  for idx0, basis_function_0 in enumerate(basis_functions): # basis_function_0 corresponds to test function
-    for idx1, basis_function_1 in enumerate(basis_functions): # basis_function_1 corresponds to solution basis function
-      # multiply ddxi by (1/dx) to get ddx (as function of xi)
-      # we integrate over xi, so multiply by dx to get integral over x
-      integrand = (D*basis_function_0.deriv(1)*(1/dx_i)*basis_function_1.deriv(1)*(1/dx_i) + a*basis_function_0*basis_function_1)*dx_i
-      # integrate over xi to get indefinite integral
-      integral = integrand.integ()
-      # compute definite integral over element and put in element matrix
-      s_elem[idx0,idx1] = integral(1)-integral(0) 
-  return s_elem
-"""
-
 def assemble_stiffness_matrix(n, elmat, x_elem, dx_elem, D, a, mode):
   # Operates on vertices. For each vertex, sum the contributions of all its
   # neighbouring elements. Each vertex has an accompanying linear basis 
@@ -177,15 +155,6 @@ def assemble_stiffness_matrix(n, elmat, x_elem, dx_elem, D, a, mode):
         s[elmat[i,j],elmat[i,k]] += s_elem[j,k]
   return s
         
-        # s_00 = s_elem[0,0] 
-        # s_01 = s_elem[0,1]
-        # s_10 = s_elem[1,0]
-        # s_11 = s_elem[1,1] + s_elem[0,0]
-        # s_12 = s_elem[0,1]
-        # s_21 = s_elem[1,0]
-        # s_22 = s_elem[1,1] + s_elem[0,0]
-        # s_23 = s_elem[0,1]
-        
 def generate_element_vector_analytical(x_i,dx_i,f):
   # Operates on elements.
   x0 = x_i - dx_i/2
@@ -198,13 +167,14 @@ def generate_element_vector_numerical(x_i,dx_i,f):
   # Operates on elements.
   x0 = x_i - dx_i/2
   x1 = x_i + dx_i/2
+  f_xi = lambda xi : f(xi*dx_i+x0) # transform f to function of xi
   # get basis functions
   basis_functions = define_basis_functions(1)
   d_elem = np.zeros(len(basis_functions))
   for idx0, basis_function_0 in enumerate(basis_functions): # basis_function_0 corresponds to test function
     # transform f to function of xi: x = x0 + xi*dx 
     # we integrate over xi, so multiply by dx to get integral over x
-    integrand = lambda xi : f(xi*dx_i+x0)*basis_function_0(xi)*dx_i
+    integrand = lambda xi : f_xi(xi)*basis_function_0(xi)*dx_i
     # integrate over element and put in element vector
     d_elem[idx0] = quad(integrand,0,1)[0] 
   return d_elem
@@ -262,8 +232,7 @@ def plot_solution(x, u, n, D, a, alpha, beta, gamma, mode):
   plt.title(title, y=1.02, fontsize = 16)
   plt.grid()
   plt.show()
-    
-  
+      
 def main():
 
   ## Input
@@ -299,9 +268,7 @@ def main():
   print(u)
   
   plot_solution(x_vert, u, n, D, a, alpha, beta, gamma, mode)
-  
-  
-    
+      
 if __name__=='__main__':
   main()
   
@@ -312,4 +279,5 @@ if __name__=='__main__':
   # Compute exact solution and compare to numerical solution
   # Make basis functions functions of x, and do transformation to xi in generate_element_matrix
   # Implement varying D, a
+  # Implement systematic calculation of stiffness matrix and source vector using constraints on basis functions
   
