@@ -26,6 +26,7 @@
 *.out
 *.run.xml
 *.synctex.gz
+*.spl
 # Exclude extra latex build files
 *.dvi
 *.nav
