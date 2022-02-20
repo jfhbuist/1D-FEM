@@ -1,5 +1,9 @@
 ### General
 
+# Specific:
+notes.txt
+tmp*
+
 # Exclude large files
 *.mp4
 *.tar

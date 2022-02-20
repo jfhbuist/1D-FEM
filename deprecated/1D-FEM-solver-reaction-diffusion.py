@@ -64,63 +64,80 @@ def generate_topology(n):
     elmat[idx,1] = idx + 1
   return elmat
   
-def define_basis_functions(mode):
+def define_basis_functions(x_i, dx_i, mode):
   # Define basis functions on element i (actually half of the basis function 
   # associated with a vertex).
-  # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
-  # for a given element, phi0 is 1 at the left boundary node
-  # for a given element, phi1 is 1 at the right boundary node
+  # x_i = middle of element.
+  x0 = x_i - dx_i/2  # location of left boundary vertex
+  x1 = x_i + dx_i/2  # location of right boundary vertex
+  # for a given element, phi0 is 1 at the left boundary vertex
+  # for a given element, phi1 is 1 at the right boundary vertex
   if mode == 0:
     # define by parameterization
-    phi0 = 1, -1
-    phi1 = 0, 1
+    phi0 = x1/dx_i, -1/dx_i
+    phi1 = -x0/dx_i, 1/dx_i
   elif mode == 1:
     # define as python function
-    phi0 = lambda xi : 1-xi    
-    phi1 = lambda xi : xi
+    phi0 = lambda x : (x1 - x )/dx_i 
+    phi1 = lambda x : (x  - x0)/dx_i 
   elif mode == 2:
     # define as symbolic polynomial
-    xi = sp.symbols("xi")
-    phi0 = 1 - xi
-    phi1 = xi
+    x = sp.symbols("x")
+    phi0 = (x1 - x )/dx_i   # 1 - xi
+    phi1 = (x  - x0)/dx_i   # xi
   basis_functions = phi0, phi1
   return basis_functions
 
 def generate_element_matrix_analytical(x_i, dx_i, D, a):
   # Element matrix, operates on elements. # Assume linear 1D basis functions. 
   # Matrix should be symmetric. Analytical calculation.
+  # diffusion: D*int_0^1 ((d/dxi)test_function_i(xi)*(dxi/dx) * (d/dxi)basis_function_j(xi)*(dxi/dx))*dx_i dxi
+  # reaction:  a*int_0^1 test_function_i(xi)*basis_function_j(xi)*dx_i dxi
   s_elem = np.array([[D/dx_i + a*dx_i/3, -D/dx_i + a*dx_i/6], [-D/dx_i + a*dx_i/6, D/dx_i + a*dx_i/3]]) 
   return s_elem
   
 def generate_element_matrix_numerical(x_i, dx_i, D, a):
+  # get vertex coordinates
+  x0 = x_i - dx_i/2  # location of left boundary vertex
+  x1 = x_i + dx_i/2  # location of right boundary vertex
   # get basis functions
-  basis_functions = define_basis_functions(1) # mode set to numerical
+  basis_functions = define_basis_functions(x_i, dx_i, 1) # mode set to numerical
   # calculate s_ij
   s_elem = np.zeros((len(basis_functions),len(basis_functions)))
   # calculate numerical derivative of function using central scheme
   ddx = lambda func, x, dx : (func(x+dx/4)-func(x-dx/4))/(dx/2)
   for idx0, basis_function_0 in enumerate(basis_functions): # basis_function_0 corresponds to test function
     for idx1, basis_function_1 in enumerate(basis_functions): # basis_function_1 corresponds to solution basis function
+      # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+      basis_function_0_xi = lambda xi : basis_function_0(xi*dx_i+x0) # transform basis function to function of xi
+      basis_function_1_xi = lambda xi : basis_function_1(xi*dx_i+x0) # transform basis function to function of xi
       # multiply ddxi by (1/dx) to get ddx (as function of xi)
       # to take the derivative to xi we need the following:
       dxi = dx_i/dx_i # = 1
       # we integrate over xi, so multiply by dx to get integral over x
-      integrand = lambda xi : (D*ddx(basis_function_0,xi,dxi)*(1/dx_i)*ddx(basis_function_1,xi,dxi)*(1/dx_i) + a*basis_function_0(xi)*basis_function_1(xi))*dx_i
+      integrand = lambda xi : (D*ddx(basis_function_0_xi,xi,dxi)*(1/dx_i)*ddx(basis_function_1_xi,xi,dxi)*(1/dx_i) + a*basis_function_0_xi(xi)*basis_function_1_xi(xi))*dx_i
       # integrate over element and put in element matrix
       s_elem[idx0,idx1] = quad(integrand,0,1)[0] 
   return s_elem
 
 def generate_element_matrix_symbolic(x_i, dx_i, D, a):
-  xi = sp.symbols("xi") # we use xi as the symbolic variable
+  # get vertex coordinates
+  x0 = x_i - dx_i/2  # location of left boundary vertex
+  x1 = x_i + dx_i/2  # location of right boundary vertex
+  x = sp.symbols("x") # x is the original symbolic variable of basis functions
+  xi = sp.symbols("xi") # we use xi as the new symbolic variable
   # get basis functions
-  basis_functions = define_basis_functions(2) # mode set to symbolic
+  basis_functions = define_basis_functions(x_i, dx_i, 2) # mode set to symbolic
   # calculate s_ij
   s_elem = np.zeros((len(basis_functions),len(basis_functions)))
   for idx0, basis_function_0 in enumerate(basis_functions): # basis_function_0 corresponds to test function
     for idx1, basis_function_1 in enumerate(basis_functions): # basis_function_1 corresponds to solution basis function
+      # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+      basis_function_0_xi = basis_function_0.subs(x,xi*dx_i+x0) # transform basis function to function of xi
+      basis_function_1_xi = basis_function_1.subs(x,xi*dx_i+x0) # transform basis function to function of xi
       # multiply ddxi by (1/dx) to get ddx (as function of xi)
       # we integrate over xi, so multiply by dx to get integral over x
-      integrand = (D*sp.diff(basis_function_0,xi)*(1/dx_i)*sp.diff(basis_function_1,xi)*(1/dx_i) + a*basis_function_0*basis_function_1)*dx_i
+      integrand = (D*sp.diff(basis_function_0_xi,xi)*(1/dx_i)*sp.diff(basis_function_1_xi,xi)*(1/dx_i) + a*basis_function_0_xi*basis_function_1_xi)*dx_i
       # integrate over xi to get indefinite integral
       integral = sp.integrate(integrand,xi)
       # compute definite integral over element and put in element matrix
@@ -169,12 +186,13 @@ def generate_element_vector_numerical(x_i,dx_i,f):
   x1 = x_i + dx_i/2
   f_xi = lambda xi : f(xi*dx_i+x0) # transform f to function of xi
   # get basis functions
-  basis_functions = define_basis_functions(1)
+  basis_functions = define_basis_functions(x_i, dx_i, 1)
   d_elem = np.zeros(len(basis_functions))
   for idx0, basis_function_0 in enumerate(basis_functions): # basis_function_0 corresponds to test function
-    # transform f to function of xi: x = x0 + xi*dx 
+    # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+    basis_function_0_xi = lambda xi : basis_function_0(xi*dx_i+x0) # transform basis function to function of xi
     # we integrate over xi, so multiply by dx to get integral over x
-    integrand = lambda xi : f_xi(xi)*basis_function_0(xi)*dx_i
+    integrand = lambda xi : f_xi(xi)*basis_function_0_xi(xi)*dx_i
     # integrate over element and put in element vector
     d_elem[idx0] = quad(integrand,0,1)[0] 
   return d_elem
@@ -187,12 +205,13 @@ def generate_element_vector_symbolic(x_i,dx_i,f):
   xi = sp.symbols("xi") # we use xi as the new symbolic variable
   f_xi = f.subs(x,xi*dx_i+x0) # transform f to function of xi
   # get basis functions
-  basis_functions = define_basis_functions(2)
+  basis_functions = define_basis_functions(x_i, dx_i, 2)
   d_elem = np.zeros(len(basis_functions))
   for idx0, basis_function_0 in enumerate(basis_functions): # basis_function_0 corresponds to test function
-    # transform f to function of xi: x = x0 + xi*dx 
+    # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+    basis_function_0_xi = basis_function_0.subs(x,xi*dx_i+x0) # transform basis function to function of xi
     # we integrate over xi, so multiply by dx to get integral over x
-    integrand = f_xi*basis_function_0*dx_i
+    integrand = f_xi*basis_function_0_xi*dx_i
     # integrate over xi to get indefinite integral
     integral = sp.integrate(integrand,xi)
     # integrate over element and put in element vector
@@ -237,19 +256,20 @@ def main():
 
   ## Input
   
-  # n = 5
-  # D = 1
-  # a = 0.8
-  # alpha = 0.5
-  # beta = 2
-  # gamma = 30
-  
-  n = 100
+  # Reference input
+  n = 5
   D = 1
-  a = 1
-  alpha = 0
-  beta = 1
-  gamma = 20
+  a = 0.8
+  alpha = 0.5
+  beta = 2
+  gamma = 30
+  
+  # n = 100
+  # D = 1
+  # a = 1
+  # alpha = 0
+  # beta = 1
+  # gamma = 20
    
   mode = 1 # 0: analytical, 1: numerical, 2: symbolic
   
@@ -272,12 +292,7 @@ def main():
 if __name__=='__main__':
   main()
   
-### Todo
-  # Improve structure with classes and wrapping of functions
-  # Allow computation of u at arbitrary x (using basis functions)
-  # Generalize to non-uniform grids
-  # Compute exact solution and compare to numerical solution
-  # Make basis functions functions of x, and do transformation to xi in generate_element_matrix
-  # Implement varying D, a
-  # Implement systematic calculation of stiffness matrix and source vector using constraints on basis functions
+
+  
+  
   
