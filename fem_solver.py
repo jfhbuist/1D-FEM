@@ -176,16 +176,16 @@ class Diffusion(StiffnessMatrix):
         integrand = lambda xi : (self.D*ddx(test_function_xi,xi,dxi)*(1/dx_i)*ddx(basis_function_xi,xi,dxi)*(1/dx_i))*dx_i
         return integrand
     
-class Advection(StiffnessMatrix):
-    def __init__(self, grid, a):
+class Reaction(StiffnessMatrix):
+    def __init__(self, grid, R):
         self.grid = grid
-        self.a = a
-        self.s_A = self.assemble_stiffness_matrix()
+        self.R = R
+        self.s_R = self.assemble_stiffness_matrix()
     
     def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
-        # generate integrand for advection
+        # generate integrand for reaction
         # we integrate over xi, so multiply by dx to get integral over x
-        integrand = lambda xi : (self.a*test_function_xi(xi)*basis_function_xi(xi))*dx_i
+        integrand = lambda xi : (self.R*test_function_xi(xi)*basis_function_xi(xi))*dx_i
         # integrate over element and put in element matrix
         return integrand
 
