@@ -50,8 +50,8 @@ class DiscreteOperator:
         self.grid = grid
    
     def define_basis_functions(self, x_i, dx_i):
-        # Define basis functions on element i (actually half of the basis function 
-        # associated with a vertex).
+        # Define basis functions on element i (actually half of the basis 
+        # function associated with a vertex).
         # x_i = middle of element.
         x0 = x_i - dx_i/2  # location of left boundary vertex
         x1 = x_i + dx_i/2  # location of right boundary vertex
@@ -86,8 +86,8 @@ class Source(DiscreteOperator):
         return integrand
   
     def assemble_source_vector(self):
-        # Operates on vertices. For each vertex, some the contributions of all its
-        # neighbouring elements.
+        # Operates on vertices. For each vertex, sum the contributions of all 
+        # its neighbouring elements.
         grid = self.grid
         d = np.zeros(grid.n)
         # loop over elements
@@ -122,10 +122,10 @@ class StiffnessMatrix(DiscreteOperator):
         self.s = sum(operators)
     
     def assemble_stiffness_matrix(self):
-        # Operates on vertices. For each vertex, sum the contributions of all its
-        # neighbouring elements. Each vertex has an accompanying linear basis 
-        # function, composed of phi1 operating on its left element, and phi0 
-        # operating on its right element.
+        # Operates on vertices. For each vertex, sum the contributions of all 
+        # its neighbouring elements. Each vertex has an accompanying linear 
+        # basis function, composed of phi1 operating on its left element, and 
+        # phi0 operating on its right element.
         grid = self.grid
         s = np.zeros((grid.n,grid.n)) # n = number of vertices
         # loop over elements 
