@@ -5,18 +5,6 @@ Created on Sun Feb 20 21:00:57 2022
 
 @author: jurriaan
 
-Diffusion-reaction equation:
--D*u_xx + R*u = f
-with source term:
-f = alpha + beta*sin(gamma*x)
-and boundary conditions:
--D*u_x(0) = 0, -D*u_x(1) = 0
-
-weak form:
-\int_0^1 D*(du/dx)*(dphi/dx) dx + \int_0^1 R*u*phi dx = \int_0^1 f*phi dx
-
-S_{i,j} = \int_0^1 D*(dphi_i/dx)*(dphi_j/dx) dx + \int_0^1 R*phi_i*phi_j dx
-d_i = \int_0^1 f*phi_i dx
 """
 
 import numpy as np
@@ -41,10 +29,16 @@ def plot_dressing_up(n, D, R, alpha, beta, gamma):
     plt.show()
     
 class ExactSolution:
-    def get_solution(self, pde, bc, D, R, alpha, beta, gamma):
-        if pde == 'steady-diffusion-reaction-1D':
-            u = self.steady_diffusion_reaction_1D(bc, D, R, alpha, beta, gamma)
-        return u
+    def get_solution(self, pde, bc, n, D, R, alpha, beta, gamma):
+        if pde == 'steady_diffusion_reaction_1D':
+            u_sym, x_sym = self.steady_diffusion_reaction_1D(bc, D, R, alpha, beta, gamma)
+            # convert to a python function:
+            u_num = broadcast(sp.lambdify(x_sym, u_sym, "numpy")) 
+            # specify points at which to return function:
+            x = np.linspace(0,1,n) 
+            # evalute function at specified points: 
+            u = u_num(x) 
+        return u, x
             
     def steady_diffusion_reaction_1D(self, bc, D, R, alpha, beta, gamma):
         # x is our symbolic spatial variable:
@@ -81,32 +75,57 @@ class ExactSolution:
         c0 = c[0]
         c1 = c[1]
         uc = c0*sp.exp(mu*x) + c1*sp.exp(-mu*x)  
-        u = uc + up
-        u_num = broadcast(sp.lambdify(x, u, "numpy")) # convert to a python function
-        return u_num
+        u = uc + up # this is a symbolic function
+        return u, x
+    
+class NumericalSolution:
+    def get_solution(self, pde, bc, n, D, R, alpha, beta, gamma):
+        if pde == 'steady_diffusion_reaction_1D':
+            u, x = self.steady_diffusion_reaction_1D(bc, n, D, R, alpha, beta, gamma)
+        return u, x
+    
+    def steady_diffusion_reaction_1D(self, bc, n, D, R, alpha, beta, gamma):
+        # Diffusion-reaction equation:
+        # -D*u_xx + R*u = f
+        # with source term:
+        # f = alpha + beta*sin(gamma*x)
+        # and boundary conditions:
+        # -D*u_x(0) = 0, -D*u_x(1) = 0
+
+        # weak form:
+        # \int_0^1 D*(du/dx)*(dphi/dx) dx + \int_0^1 R*u*phi dx = \int_0^1 f*phi dx
+
+        # S_{i,j} = \int_0^1 D*(dphi_i/dx)*(dphi_j/dx) dx + \int_0^1 R*phi_i*phi_j dx
+        # d_i = \int_0^1 f*phi_i dx        
         
+        grid = fem.Grid(n)
         
-def get_fem_solution(n, D, R, alpha, beta, gamma):
-    
-    grid = fem.Grid(n)
-  
-    source = fem.Source(grid, alpha, beta, gamma)
-    print(source.d)
-    
-    diffusion = fem.Diffusion(grid, D)
-    print(diffusion.s_D)
-  
-    reaction = fem.Reaction(grid, R)
-    print(reaction.s_R)
-  
-    stiffness = fem.StiffnessMatrix(grid,[diffusion.s_D,reaction.s_R])
-    print(stiffness.s)
-  
-    u = np.linalg.solve(stiffness.s,source.d) # solve for solution values at vertices
-    print(u)
-    
-    return u, grid.x_vert
-          
+        discretization = fem.Discretization()
+      
+        source = fem.Source(grid, discretization, alpha, beta, gamma)
+        # print(source.d)
+        
+        diffusion = fem.Diffusion(grid, discretization, D)
+        # print(diffusion.s_D)
+      
+        reaction = fem.Reaction(grid, discretization, R)
+        # print(reaction.s_R)
+      
+        stiffness = fem.StiffnessMatrix(grid, discretization)
+        stiffness.combine_operators([diffusion, reaction])
+        # print(stiffness.s)
+      
+        # solve for solution values at vertices
+        # these are actually the coefficients associated with the basis 
+        # functions centered at each grid point
+        coeffs = np.linalg.solve(stiffness.s,source.d)      
+        
+        # specify points at which to return function:
+        x = np.linspace(0,1,n) 
+        u = discretization.construct_solution(coeffs, grid, x)
+
+        return u, x
+        
   
 def main():
 
@@ -129,25 +148,31 @@ def main():
     # gamma = 0
     
     # set 13
+    # n = 100
+    # D = 1
+    # R = 1
+    # alpha = 0
+    # beta = 1
+    # gamma = 20
+    
     n = 100
     D = 1
     R = 1
     alpha = 0
     beta = 1
-    gamma = 20
+    gamma = 10
     
-    pde = "steady-diffusion-reaction-1D"
+    pde = "steady_diffusion_reaction_1D"
     bc = {
     "left": ["neumann", 0],
     "right": ["neumann", 0]
     }
-    u_exact =  ExactSolution().get_solution(pde, bc, D, R, alpha, beta, gamma)
-    x_exact = np.linspace(0,1,100) 
+    u_exact, x_exact = ExactSolution().get_solution(pde, bc, n, D, R, alpha, beta, gamma)
       
-    u_fem, x_vert = get_fem_solution(n, D, R, alpha, beta, gamma)
+    u_fem, x_fem = NumericalSolution().get_solution(pde, bc, n, D, R, alpha, beta, gamma)
     
-    plt.plot(x_vert, u_fem, linewidth = 5, label = 'fem')
-    plt.plot(x_exact, u_exact(x_exact), linestyle = ':', linewidth = 5, label = 'exact')
+    plt.plot(x_fem, u_fem, linewidth = 5, label = 'fem')
+    plt.plot(x_exact, u_exact, linestyle = ':', linewidth = 5, label = 'exact')
     
     plot_dressing_up(n, D, R, alpha, beta, gamma)
       

@@ -20,6 +20,14 @@ Continuous Galerkin: Test functions equal to basis functions
 import numpy as np
 from scipy.integrate import quad
 
+def reduce_lambda(func, args):
+    # this function takes a lambda function of multiple variables, and returns 
+    # a lambda function of a single variable
+    # args can contain an arbitrary number of arguments
+    # asterisk unpacks tuple
+    return lambda x: func(x, *args) 
+
+
 class Grid:
     def __init__(self,n):
         self.n = n
@@ -44,28 +52,57 @@ class Grid:
             elmat[idx,0] = idx
             elmat[idx,1] = idx + 1
         return elmat
-  
-class DiscreteOperator:
-    def __init__(self, grid):
-        self.grid = grid
-   
-    def define_basis_functions(self, x_i, dx_i):
+    
+    
+class Discretization:
+    def __init__(self):
+        self.basis_functions = self.define_basis_functions()
+    
+    def define_basis_functions(self):
         # Define basis functions on element i (actually half of the basis 
         # function associated with a vertex).
-        # x_i = middle of element.
-        x0 = x_i - dx_i/2  # location of left boundary vertex
-        x1 = x_i + dx_i/2  # location of right boundary vertex
+        # x_i = middle of element
+        # dx_i is width of element
+        # x0 = x_i - dx_i/2  # location of left boundary vertex
+        # x1 = x_i + dx_i/2  # location of right boundary vertex     
         # for a given element, phi0 is 1 at the left boundary vertex
         # for a given element, phi1 is 1 at the right boundary vertex
         # define as python function
-        phi0 = lambda x : (x1 - x )/dx_i 
-        phi1 = lambda x : (x  - x0)/dx_i 
-        basis_functions = phi0, phi1
+        phi0 = lambda x, x_i, dx_i : (x_i - x)/dx_i + 1/2  # (x1 - x )/dx 
+        phi1 = lambda x, x_i, dx_i : (x - x_i)/dx_i + 1/2  # (x  - x0)/dx 
+        basis_functions = [phi0, phi1]
         return basis_functions 
     
+    def construct_solution(self, coeffs, grid, sol_locs):
+        sol = np.zeros(len(sol_locs))
+        for idx0, sol_loc in enumerate(sol_locs):
+            arr = sol_locs[idx0] - grid.x_vert
+            # replace non positive values with inf then use argmin to find the smallest positive
+            x0_index = np.where(arr > 0, arr, np.inf).argmin() # index of left bounding vertex
+            x_i_index = x0_index # index of element that position is located in
+            x1_index = x0_index + 1 # index of right bounding index
+            x_i = grid.x_elem[x_i_index]
+            dx_i = grid.dx_elem[x_i_index]
+            sol[idx0] = coeffs[x0_index]*self.basis_functions[0](sol_loc, x_i, dx_i) + coeffs[x1_index]*self.basis_functions[1](sol_loc, x_i, dx_i)
+        return sol
+        
+  
+class DiscreteOperator:
+    def __init__(self, grid, discretization):
+        self.grid = grid
+        self.discretization = discretization
+   
+    def generate_basis_functions(self, x_i, dx_i):
+        general_basis_functions = self.discretization.basis_functions  
+        local_basis_functions = list()
+        for idx, general_basis_function in enumerate(general_basis_functions): 
+            local_basis_functions.append(reduce_lambda(general_basis_function, (x_i, dx_i))) # reduce_lambda necessary to eliminate elusive bug
+        return local_basis_functions
+       
+    
 class Source(DiscreteOperator):
-    def __init__(self, grid, alpha, beta, gamma):
-        super().__init__(grid)
+    def __init__(self, grid, discretization, alpha, beta, gamma):
+        super().__init__(grid, discretization)
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
@@ -104,7 +141,7 @@ class Source(DiscreteOperator):
         x0 = x_i - dx_i/2
         x1 = x_i + dx_i/2
         # get basis functions
-        basis_functions = self.define_basis_functions(x_i, dx_i)
+        basis_functions = self.generate_basis_functions(x_i, dx_i)
         d_elem = np.zeros(len(basis_functions))
         for idx0, test_function in enumerate(basis_functions): # test function
             # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
@@ -117,9 +154,14 @@ class Source(DiscreteOperator):
 
   
 class StiffnessMatrix(DiscreteOperator):
-    def __init__(self, grid, operators):
-        super().__init__(grid)
-        self.s = sum(operators)
+    def __init__(self, grid, discretization):
+        super().__init__(grid, discretization)
+        
+    def combine_operators(self, operators):
+        s = np.zeros(operators[0].s.shape)
+        for idx, operator in enumerate(operators):
+            s = s + operator.s
+        self.s = s
     
     def assemble_stiffness_matrix(self):
         # Operates on vertices. For each vertex, sum the contributions of all 
@@ -146,7 +188,7 @@ class StiffnessMatrix(DiscreteOperator):
         x0 = x_i - dx_i/2  # location of left boundary vertex
         x1 = x_i + dx_i/2  # location of right boundary vertex
         # get basis functions
-        basis_functions = self.define_basis_functions(x_i, dx_i) 
+        basis_functions = self.generate_basis_functions(x_i, dx_i) 
         # calculate s_ij
         s_elem = np.zeros((len(basis_functions),len(basis_functions)))
         for idx0, test_function in enumerate(basis_functions): # test function
@@ -158,12 +200,13 @@ class StiffnessMatrix(DiscreteOperator):
                 # integrate over element and put in element matrix
                 s_elem[idx0,idx1] = quad(integrand,0,1)[0] 
         return s_elem
+    
   
 class Diffusion(StiffnessMatrix):
-    def __init__(self, grid, D):
-        self.grid = grid
-        self.D = D
-        self.s_D = self.assemble_stiffness_matrix()
+    def __init__(self, grid, discretization, D):
+        super().__init__(grid, discretization)
+        self.coeff = D
+        self.s = self.assemble_stiffness_matrix()
     
     def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
         # generate integrand for diffusion
@@ -173,19 +216,20 @@ class Diffusion(StiffnessMatrix):
         # to take the derivative to xi we need the following:
         dxi = dx_i/dx_i # = 1
         # we integrate over xi, so multiply by dx to get integral over x
-        integrand = lambda xi : (self.D*ddx(test_function_xi,xi,dxi)*(1/dx_i)*ddx(basis_function_xi,xi,dxi)*(1/dx_i))*dx_i
+        integrand = lambda xi : (self.coeff*ddx(test_function_xi,xi,dxi)*(1/dx_i)*ddx(basis_function_xi,xi,dxi)*(1/dx_i))*dx_i
         return integrand
     
+    
 class Reaction(StiffnessMatrix):
-    def __init__(self, grid, R):
-        self.grid = grid
-        self.R = R
-        self.s_R = self.assemble_stiffness_matrix()
+    def __init__(self, grid, discretization, R):
+        super().__init__(grid, discretization)
+        self.coeff = R
+        self.s = self.assemble_stiffness_matrix()
     
     def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
         # generate integrand for reaction
         # we integrate over xi, so multiply by dx to get integral over x
-        integrand = lambda xi : (self.R*test_function_xi(xi)*basis_function_xi(xi))*dx_i
+        integrand = lambda xi : (self.coeff*test_function_xi(xi)*basis_function_xi(xi))*dx_i
         # integrate over element and put in element matrix
         return integrand
 
