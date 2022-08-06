@@ -84,24 +84,10 @@ class Discretization:
         # for a given element, phi0 is 1 at the left boundary vertex
         # for a given element, phi1 is 1 at the right boundary vertex
         # define as python function
-        phi0 = lambda x, x_i, dx_i : (x_i - x)/dx_i + 1/2  # (x1 - x )/dx 
-        phi1 = lambda x, x_i, dx_i : (x - x_i)/dx_i + 1/2  # (x  - x0)/dx 
+        phi0 = lambda x, x_i, dx_i : (x_i - x)/dx_i + 1/2  # (x1 - x )/dx # corresponds to elmat[i,0]
+        phi1 = lambda x, x_i, dx_i : (x - x_i)/dx_i + 1/2  # (x  - x0)/dx # corresponds to elmat[i,1]
         basis_functions = [phi0, phi1]
         return basis_functions 
-    
-    def construct_solution(self, coeffs, grid, sol_locs):
-        sol = np.zeros(len(sol_locs))
-        for idx0, sol_loc in enumerate(sol_locs):
-            arr = sol_locs[idx0] - grid.x_vert
-            # replace non positive values with inf then use argmin to find the smallest positive
-            x0_index = np.where(arr > 0, arr, np.inf).argmin() # index of left bounding vertex
-            x_i_index = x0_index # index of element that position is located in
-            x1_index = x0_index + 1 # index of right bounding index
-            x_i = grid.x_elem[x_i_index]
-            dx_i = grid.dx_elem[x_i_index]
-            sol[idx0] = coeffs[x0_index]*self.basis_functions[0](sol_loc, x_i, dx_i) + coeffs[x1_index]*self.basis_functions[1](sol_loc, x_i, dx_i)
-        return sol
-        
   
 class DiscreteOperator:
     def __init__(self, grid, discretization):
@@ -176,15 +162,14 @@ class Source(DiscreteOperator):
 class StiffnessMatrix(DiscreteOperator):
     def __init__(self, grid, discretization, operators):
         super().__init__(grid, discretization)
-        self.s_list = list()
         for operator in operators:
-            self.s_list.append(self.assemble_stiffness_matrix(operator))
-        self.s = self.combine_operators(self.s_list)
+            operator.s = self.assemble_stiffness_matrix(operator)
+        self.s = self.combine_operators(operators)
         
-    def combine_operators(self, s_list):
-        s = np.zeros(s_list[0].shape)
-        for idx, operator in enumerate(s_list):
-            s = s + operator
+    def combine_operators(self, operators):
+        s = np.zeros(operators[0].s.shape)
+        for idx, operator in enumerate(operators):
+            s = s + operator.s
         return s
     
     def assemble_stiffness_matrix(self, operator):
@@ -223,17 +208,14 @@ class StiffnessMatrix(DiscreteOperator):
                 integrand = operator.generate_integrand(test_function_xi, basis_function_xi, x_i, dx_i)
                 # integrate over element and put in element matrix
                 s_elem[idx0,idx1] = quad(integrand,0,1)[0] 
-        return s_elem
-    
+        return s_elem    
   
 class Diffusion:
     # -D*u_xx
     # weak form:
     # -[D*(du/dx)*phi]_0^L + \int_0^L D*(du/dx)*(dphi/dx) dx    
-    def __init__(self, grid, discretization, D, bc):
+    def __init__(self, D):
         self.coeff = D
-        self.bc = bc
-        #self.bt = self.generate_boundary_terms()
     
     def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
         # generate integrand for diffusion
@@ -246,25 +228,23 @@ class Diffusion:
         integrand = lambda xi : (self.coeff*ddx(test_function_xi,xi,dxi)*(1/dx_i)*ddx(basis_function_xi,xi,dxi)*(1/dx_i))*dx_i
         return integrand
     
-    def generate_boundary_integrand(self, x_bound, loc_bound):
+    def generate_boundary_integrand(self, bc, x_bound, loc_bound):
         # since we reduce the order of the diffusion operator through integration by parts, boundary terms appear, which must be added to the equation
         # since this term will be added to right-hand side, it gets a minus sign
-        if self.bc[loc_bound][0] == "neumann":
+        if bc[loc_bound][0] == "neumann":
             # in 1D case there is nothing to integrate, test function at boundary is just 1
-            bt = self.coeff*self.bc[loc_bound][1]*1
+            integrand = self.coeff*bc[loc_bound][1]*1
         else:
-            bt = 0
-        return bt
+            integrand = 0
+        return integrand
                     
     
 class Reaction:
     # R*u
     # weak form:
     # \int_0^L R*u*phi dx
-    def __init__(self, grid, discretization, R):
+    def __init__(self, R):
         self.coeff = R
-        # self.s = self.assemble_stiffness_matrix()
-        # self.bt = self.generate_boundary_terms()
     
     def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
         # generate integrand for reaction
@@ -273,50 +253,140 @@ class Reaction:
         # integrate over element and put in element matrix
         return integrand
     
-    def generate_boundary_integrand(self, x_bound, loc_bound):
+    def generate_boundary_integrand(self, bc, x_bound, loc_bound):
         # the boundary terms are zero for the reaction operator, since there is no integration by parts
-        bt = 0
-        return bt
+        integrand = 0
+        return integrand
     
 
-class Boundary(DiscreteOperator):
-    def __init__(self, grid, discretization, operators):
+class NaturalBoundary(DiscreteOperator):
+    def __init__(self, grid, discretization, operators, bc):
         super().__init__(grid, discretization)
-        self.b_list = list()
+        self.bc = bc
         for operator in operators:
-            self.b_list.append(self.assemble_boundary_vector(operator))
-        self.b = self.combine_operators(self.b_list)
+            operator.b_nat = self.assemble_natural_boundary_vector(operator)
+        self.b_nat = self.combine_operators(operators)
         
-    def combine_operators(self, b_list):
-        b = np.zeros(self.grid.n)
-        for idx, operator in enumerate(b_list):
-            b = b + operator
-        return b
+    def combine_operators(self, operators):
+        b_nat = np.zeros(self.grid.n)
+        for idx, operator in enumerate(operators):
+            b_nat = b_nat + operator.b_nat
+        return b_nat
         
-    def generate_boundary_term_ibp(self, operator, boundary_element_idx):
+    def generate_natural_boundary_term(self, operator, boundary_element_idx):
         # Operates on boundary element
+        # natural boundary conditions are implicitly satisfied by the formulation
         grid = self.grid
         xb = grid.x_bound[boundary_element_idx]
         lb = grid.loc_bound[boundary_element_idx]
-        bt = operator.generate_boundary_integrand(xb, lb) 
+        integrand = operator.generate_boundary_integrand(self.bc, xb, lb) 
         # We need to integrate over the boundary. In 1D this entails flipping the sign of left boundary condition. 
         if lb == 'left':
-            bt = - bt
+            bt = - integrand
         elif lb == 'right':
-            bt = bt         
+            bt = integrand         
         return bt
     
-    def assemble_boundary_vector(self, operator):
+    def assemble_natural_boundary_vector(self, operator):
         # Operates on vertices
         grid = self.grid
         b = np.zeros(grid.n)
-        # loop over elements 
+        # loop over boundary elements 
         for i, x_i in enumerate(grid.x_bound): # x_i is center of current boundary element
-            bt = self.generate_boundary_term_ibp(operator, i)
+            bt = self.generate_natural_boundary_term(operator, i)
             # assign contributions from boundary element i to every connected vertex (only 1 in 1D)
             for j in range(grid.elbmat.shape[1]):     
                 # grid.elbmat[i,j] is the index of the vertex
                 b[grid.elbmat[i,j]] += bt
         return b
-            
+    
+    
+class Solution(DiscreteOperator):
+    def __init__(self, grid, discretization, bc, stiffness, source, natural_boundary, x):
+        super().__init__(grid, discretization)
+        self.bc = bc
+        self.u = self.calculate_solution(stiffness, source, natural_boundary, x)
         
+    def calculate_solution(self, stiffness, source, natural_boundary, x):
+        grid = self.grid
+        discretization = self.discretization
+        bc = self.bc
+        s = stiffness.s
+        d = source.d
+        b_nat = natural_boundary.b_nat
+        
+        # now we handle the essential boundary terms (ie dirichlet boundary conditions)
+        
+        # see https://www.math.colostate.edu/~bangerth/videos.html, lectures 21.6 and 21.65 (Wolfgang Bangerth)
+        # theoretical view is to decompose the solution into: u = u_0 + g_tilde 
+        # so we solve the following equation for u_0:
+        # s*u_0 = d + b_nat - u*g_tilde 
+        # then we set up the homegenous dirichlet problem for u_0
+        # this includes setting h[idx1] = 0
+        # after linear solve the g vector is added back to the solution, to obtain u
+        # below, we instead take a (equivalent) practical approach, in which we 
+        # just set the values of the boundary nodes to the values of the dirichlet boundary conditions
+        # and move their contribution (in the equations for the interior nodes) to the right hand side
+        
+        # g is a vector containing set values for nodes lying on dirichlet boundary
+        g = np.zeros(grid.n) 
+        for idx0, xb in enumerate(grid.x_bound): # loop over boundary elements
+            lb = grid.loc_bound[idx0]
+            for idx1 in grid.elbmat[idx0]: # loop over vertices connected to boundary element
+                xv = grid.x_vert[idx1] # position of vertex
+                if bc[lb][0] == "dirichlet":
+                    # set value for this boundary node
+                    g[idx1] = bc[lb][1]
+                                                    
+        # right-hand side contains contributions from source, natural boundary conditions, and dirichlet boundary conditions             
+        h = d + b_nat - np.matmul(s,g)
+        # substracting the latter term just means we move terms in the equations for the interior points to the right hand side
+        # these are the terms involving boundary points
+        
+        # conduct same loop as before
+        # modify stiffness matrix and rhs vector to implement dirichlet boundary conditions
+        for idx0, xb in enumerate(grid.x_bound): # loop over boundary elements
+            lb = grid.loc_bound[idx0]
+            for idx1 in grid.elbmat[idx0]: # loop over vertices connected to boundary element
+                xv = grid.x_vert[idx1] # position of vertex
+                if bc[lb][0] == "dirichlet":
+                    # eliminate row in stiffness matrix and replace with diagonal 1
+                    # this way we get an equation such that 1*boundary_vertex = ...
+                    s[idx1] = 0
+                    # eliminate column in stiffness matrix
+                    # this is possible because we have moved these terms to the right hand side by subtracting np.matmul(s,g) (aka forward substitution)
+                    s[:,idx1] = 0
+                    s[idx1,idx1] = 1
+                    
+                    # eliminate row in rhs
+                    # this changes the equations for the boundary vertices into 1*boundary_vertex = bc
+                    h[idx1] = g[idx1]
+                    
+        # solve for solution values at vertices
+        # these are actually the coefficients associated with the basis 
+        # functions centered at each grid point    
+        u_vert = np.linalg.solve(s,h) 
+        # construct solution at arbitrary locations x, using basis functions
+        u = self.construct_solution(grid, discretization, u_vert, x)
+        return u        
+   
+    def construct_solution(self, grid, discretization, coeffs, sol_locs):
+        sol = np.zeros(len(sol_locs))
+        # loop over solution coordinates
+        for idx_sol, sol_loc in enumerate(sol_locs):
+            # loop over elements
+            for i, x_i in enumerate(grid.x_elem): # x_i is center of current element
+                dx_i = grid.dx_elem[i]
+                if (sol_loc >= x_i - dx_i) and (sol_loc <= x_i + dx_i):
+                    # coordinate is in this element
+                    # get basis functions
+                    basis_functions = self.generate_basis_functions(x_i, dx_i)                       
+                    # loop over bounding vertices
+                    for j in range(grid.elmat.shape[1]): 
+                        # we assume the basis functions and the rows of the elmat are ordered correspondingly
+                        sol[idx_sol] += coeffs[grid.elmat[i,j]]*discretization.basis_functions[j](sol_loc, x_i, dx_i)
+                    # due to >= and <= signs in if statement it would be possible to double count this sol_loc
+                    # so break this loop and move on to next sol_loc
+                    break 
+        return sol
+                

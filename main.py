@@ -41,6 +41,7 @@ class ExactSolution:
         return u, x
             
     def steady_diffusion_reaction_1D(self, bc, L, D, R, alpha, beta, gamma):
+        # see chapter 6, Riley & Hobson (2011)
         # x is our symbolic spatial variable:
         x = sp.symbols("x")
         # periodic source terms:
@@ -65,12 +66,22 @@ class ExactSolution:
             A[0,0] = mu
             A[0,1] = -mu
             B[0] = -dupdx.subs(x,0) + bc["left"][1]
+        elif bc["left"][0] == "dirichlet":
+            # c0 + c1 + up(0) = bc(left)
+            A[0,0] = 1
+            A[0,1] = 1
+            B[0] = -up.subs(x,0) + bc["left"][1]         
         if bc["right"][0] == "neumann":
             # mu*c0*exp(mu*L) - mu*c1*exp(-mu*L) + dupdx(1) = bc(right)
             # L = 1
             A[1,0] = mu*np.exp(mu*L)
             A[1,1] = -mu*np.exp(-mu*L) 
             B[1] = -dupdx.subs(x,L) + bc["right"][1]
+        elif bc["right"][0] == "dirichlet":
+            # c0*exp(mu*L) + c1*exp(-mu*L) + up(L) = bc(right)
+            A[1,0] = np.exp(mu*L)
+            A[1,1] = np.exp(-mu*L)
+            B[1] = -up.subs(x,L) + bc["right"][1]  
         c = np.linalg.solve(A, B)
         c0 = c[0]
         c1 = c[1]
@@ -85,7 +96,7 @@ class NumericalSolution:
         return u, x
     
     def steady_diffusion_reaction_1D(self, bc, L, n, D, R, alpha, beta, gamma):
-        # Diffusion-reaction equation:
+        # Diffusion-reaction equation (aka Helmholtz equation):
         # -D*u_xx + R*u = f
         # with source term:
         # f = alpha + beta*sin(gamma*x)
@@ -106,27 +117,25 @@ class NumericalSolution:
         source = fem.Source(grid, discretization, alpha, beta, gamma)
         # print(source.d)
         
-        diffusion = fem.Diffusion(grid, discretization, D, bc)
+        diffusion = fem.Diffusion(D)
         # print(diffusion.s_D)
       
-        reaction = fem.Reaction(grid, discretization, R)
+        reaction = fem.Reaction(R)
         # print(reaction.s_R)
       
         operators = [diffusion, reaction]
         stiffness = fem.StiffnessMatrix(grid, discretization, operators)
-        #stiffness.combine_operators([diffusion, reaction])
         # print(stiffness.s)
         
-        boundary = fem.Boundary(grid, discretization, operators)
+        natural_boundary = fem.NaturalBoundary(grid, discretization, operators, bc)
       
-        # solve for solution values at vertices
-        # these are actually the coefficients associated with the basis 
-        # functions centered at each grid point
-        coeffs = np.linalg.solve(stiffness.s,(source.d+boundary.b))      
+
         
         # specify points at which to return function:
         x = np.linspace(0,L,n) 
-        u = discretization.construct_solution(coeffs, grid, x)
+        
+        solution = fem.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        u = solution.u
 
         return u, x
         
@@ -154,21 +163,21 @@ def main():
     # gamma = 0
     
     # set 13
-    # L = 1
-    # n = 100
-    # D = 1
-    # R = 1
-    # alpha = 0
-    # beta = 1
-    # gamma = 20
-    
     L = 1
     n = 100
     D = 1
     R = 1
     alpha = 0
     beta = 1
-    gamma = 10
+    gamma = 20
+    
+    # L = 1
+    # n = 50
+    # D = 1
+    # R = 1
+    # alpha = 0
+    # beta = 1
+    # gamma = 10
     
     # L = 1.5
     # n = 100
@@ -182,9 +191,13 @@ def main():
     bc = {
     "left": ["neumann", 0],
     "right": ["neumann", 0]
-    }
+    } 
+    # bc = {
+    # "left": ["dirichlet", 1],
+    # "right": ["neumann", 0]
+    # }
     u_exact, x_exact = ExactSolution().get_solution(pde, bc, L, n, D, R, alpha, beta, gamma)
-      
+    
     u_fem, x_fem = NumericalSolution().get_solution(pde, bc, L, n, D, R, alpha, beta, gamma)
     
     plt.plot(x_fem, u_fem, linewidth = 5, label = 'fem')
