@@ -258,6 +258,30 @@ class Reaction:
         integrand = 0
         return integrand
     
+    
+class Advection:
+    # A*u_x
+    # weak form:
+    # \int_0^L A*(du/dx)*phi dx 
+    def __init__(self, A):
+        self.coeff = A
+        
+    def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
+        # generate integrand for linear advection
+        # calculate numerical derivative of function using central scheme
+        ddx = lambda func, x, dx : (func(x+dx/4)-func(x-dx/4))/(dx/2)
+        # multiply ddxi by (1/dx) to get ddx (as function of xi)
+        # to take the derivative to xi we need the following:
+        dxi = dx_i/dx_i # = 1
+        # we integrate over xi, so multiply by dx to get integral over x
+        integrand = lambda xi : (self.coeff*ddx(basis_function_xi,xi,dxi)*(1/dx_i)*test_function_xi(xi))*dx_i
+        return integrand
+        
+    def generate_boundary_integrand(self, bc, x_bound, loc_bound):
+        # the boundary terms are zero for the advection operator, since there is no integration by parts
+        integrand = 0
+        return integrand
+    
 
 class NaturalBoundary(DiscreteOperator):
     def __init__(self, grid, discretization, operators, bc):
@@ -317,7 +341,6 @@ class Solution(DiscreteOperator):
         
         # now we handle the essential boundary terms (ie dirichlet boundary conditions)
         
-        # see https://www.math.colostate.edu/~bangerth/videos.html, lectures 21.6 and 21.65 (Wolfgang Bangerth)
         # theoretical view is to decompose the solution into: u = u_0 + g_tilde 
         # so we solve the following equation for u_0:
         # s*u_0 = d + b_nat - u*g_tilde 
