@@ -25,11 +25,23 @@ class NumericalSolution:
         # f = alpha + beta*sin(gamma*x)
 
         # weak form:
-        # -[D*(du/dx)*phi]_0^L + \int_0^L D*(du/dx)*(dphi/dx) dx + \int_0^L R*u*phi dx = \int_0^L f*phi dx
-        # here phi represents the test function, aka weighting function (equal to basis function in continuous Galerkin)
+        # -[D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx + \int_0^L R*u*v dx = \int_0^L f*v dx
+        # here v represents the test function, aka weighting function 
+        
+        # Now let 
+        # u = \sum_i c_j*phi_j 
+        # v = \sum v_i
 
-        # S_{i,j} = \int_0^L D*(dphi_i/dx)*(dphi_j/dx) dx + \int_0^L R*phi_i*phi_j dx
-        # d_i = \int_0^L f*phi_i dx   
+        # The problem to solve is
+        # S*c = d 
+        # S_{i,j} = \int_0^L D*(v_i/dx)*(dphi_j/dx) dx + \int_0^L R*v_i*phi_j dx
+        # c_i = c_j
+        # d_i = \int_0^L f*v_i dx           
+        # Each equation in the linear system is associated with one test function v_i.
+        # Each vertex has multiple associated test functions which reach a value of 1 at that vertex.
+        
+        # We use standard (continuous) Galerkin, in which the test functions are equal to the basis functions:
+        # v_i = phi_i
         
         grid = fem.Grid(L, n)
         
@@ -62,8 +74,7 @@ class NumericalSolution:
         # f = alpha + beta*sin(gamma*x)
 
         # weak form:
-        # \int_0^L A*(du/dx)*phi dx - [D*(du/dx)*phi]_0^L + \int_0^L D*(du/dx)*(dphi/dx) dx + \int_0^L R*u*phi dx = \int_0^L f*phi dx
-        # here phi represents the test function, aka weighting function (equal to basis function in continuous Galerkin)
+        # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx + \int_0^L R*u*v dx = \int_0^L f*v dx
         
         grid = fem.Grid(L, n)
         
@@ -99,8 +110,7 @@ class NumericalSolution:
         # f = alpha + beta*sin(gamma*x)
 
         # weak form:
-        # \int_0^L A*(du/dx)*phi dx - [D*(du/dx)*phi]_0^L + \int_0^L D*(du/dx)*(dphi/dx) dx + \int_0^L R*u*phi dx = \int_0^L f*phi dx
-        # here phi represents the test function, aka weighting function (equal to basis function in continuous Galerkin) 
+        # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx + \int_0^L R*u*v dx = \int_0^L f*v dx
         
         grid = fem.Grid(L, n)
         

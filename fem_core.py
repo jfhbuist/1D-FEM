@@ -106,7 +106,7 @@ class DiscreteOperator:
 class Source(DiscreteOperator):
     # f
     # weak form:
-    # \int_0^L f*phi dx
+    # \int_0^L f*v dx
     def __init__(self, grid, discretization, alpha, beta, gamma):
         super().__init__(grid, discretization)
         self.alpha = alpha
@@ -133,13 +133,19 @@ class Source(DiscreteOperator):
         # its neighbouring elements.
         grid = self.grid
         d = np.zeros(grid.n)
-        # loop over elements
-        for i, x_i in enumerate(grid.x_elem): # x_i is center of current element
-              dx_i = grid.dx_elem[i] # get width of current element
-              d_elem =  self.generate_element_vector(x_i, dx_i)    
-              for j in range(grid.elmat.shape[1]):
-                  # at vertex i we have contributions phi1*f_i + phi0*f_i
-                  d[grid.elmat[i,j]] += d_elem[j]
+        for i, x_i in enumerate(grid.x_elem): # loop over elements
+            # x_i is center of current element
+            dx_i = grid.dx_elem[i] # get width of current element
+            d_elem =  self.generate_element_vector(x_i, dx_i)    
+            for j in range(grid.elmat.shape[1]): # loop over equations for vertex coefficients
+                # Each equation is associated with one test function.  
+                # We are now considering the contribution of one element to two different equations (in 1D).
+                # Each equation is associated with two elements (in 1D).
+                # So the equation will be revisted when considering a different element.
+                # From vertex i we have contributions (in 1D):
+                # \int_{x_{i-1}}^{x_{i}} phi1*f + \int_{x_{i}}^{x_{i+1}} phi0*f 
+                d[grid.elmat[i,j]] += d_elem[j]
+                # index: equation/test function
         return d
   
     def generate_element_vector(self, x_i, dx_i):
@@ -149,13 +155,13 @@ class Source(DiscreteOperator):
         # get basis functions
         basis_functions = self.generate_basis_functions(x_i, dx_i)
         d_elem = np.zeros(len(basis_functions))
-        for idx0, test_function in enumerate(basis_functions): # test function
+        for j, test_function in enumerate(basis_functions): # loop over test functions
             # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
             test_function_xi = lambda xi : test_function(xi*dx_i+x0) # transform test function to function of xi
             # we integrate over xi, so multiply by dx to get integral over x
             integrand = self.generate_integrand(test_function_xi, x_i, dx_i)
             # integrate over element and put in element vector
-            d_elem[idx0] = quad(integrand,0,1)[0] 
+            d_elem[j] = quad(integrand,0,1)[0] 
         return d_elem
 
   
@@ -175,19 +181,28 @@ class StiffnessMatrix(DiscreteOperator):
     def assemble_stiffness_matrix(self, operator):
         # Operates on vertices. For each vertex, sum the contributions of all 
         # its neighbouring elements. Each vertex has an accompanying linear 
-        # basis function, composed of phi1 operating on its left element, and 
-        # phi0 operating on its right element.
+        # basis function. In 1D this is composed of phi1 operating on its left 
+        # element, and phi0 operating on its right element.
         grid = self.grid
         s = np.zeros((grid.n,grid.n)) # n = number of vertices
-        # loop over elements 
-        for i, x_i in enumerate(grid.x_elem): # x_i is center of current element
+        for i, x_i in enumerate(grid.x_elem): # loop over elements
+            # x_i is center of current element
             dx_i = grid.dx_elem[i] # get width of current element
             s_elem = self.generate_element_matrix(operator, x_i, dx_i)
-            for j in range(grid.elmat.shape[1]): # loop over test functions
-                for k in range(grid.elmat.shape[1]): # loop over solution basis functions
-                    # at vertex i we have contributions phi1*phi0*u_{i-1} + phi1*phi1*u_i
-                    # + phi0*phi0*u_i + phi0*phi1*u_{i+1}. 
+            for j in range(grid.elmat.shape[1]): # loop over equations for vertex coefficients
+                # Each equation is associated with one test function.  
+                # We are now considering the contribution of one element to two different equations (in 1D).
+                # Each equation is associated with two elements (in 1D).
+                # So the equation will be revisted when considering a different element.
+                for k in range(grid.elmat.shape[1]): # loop over solution basis functions 
+                    # Each basis function is associated with one vertex.
+                    # For each element-equation combination, there are two contributing vertices (in 1D).
+                    # Each vertex is associated with two equations and two elements (in 1D).
+                    # So the vertex will be revisited three times (in 1D).
+                    # From vertex i we have contributions (in 1D):
+                    # \int_{x_{i-1}}^{x_{i}} phi0*phi1*c_i + \int_{x_{i-1}}^{x_{i}} phi1*phi1 c_i + \int_{x_{i}}^{x_{i+1}} phi0*phi0 c_i + \int_{x_{i}}^{x_{i+1}} phi1*phi0 c_i    
                     s[grid.elmat[i,j],grid.elmat[i,k]] += s_elem[j,k]
+                    # first index: equation/test function, second index: vertex coefficient/basis function
         return s
 
     def generate_element_matrix(self, operator, x_i, dx_i):
@@ -200,20 +215,20 @@ class StiffnessMatrix(DiscreteOperator):
         basis_functions = self.generate_basis_functions(x_i, dx_i) 
         # calculate s_ij
         s_elem = np.zeros((len(basis_functions),len(basis_functions)))
-        for idx0, test_function in enumerate(basis_functions): # test function
-            for idx1, basis_function in enumerate(basis_functions): # solution basis function
+        for j, test_function in enumerate(basis_functions): # loop over test functions
+            for k, basis_function in enumerate(basis_functions): # loop over solution basis functions
                 # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
                 test_function_xi = lambda xi : test_function(xi*dx_i+x0) # transform test function to function of xi
                 basis_function_xi = lambda xi : basis_function(xi*dx_i+x0) # transform basis function to function of xi
                 integrand = operator.generate_integrand(test_function_xi, basis_function_xi, x_i, dx_i)
                 # integrate over element and put in element matrix
-                s_elem[idx0,idx1] = quad(integrand,0,1)[0] 
+                s_elem[j,k] = quad(integrand,0,1)[0] 
         return s_elem    
   
 class Diffusion:
     # -D*u_xx
     # weak form:
-    # -[D*(du/dx)*phi]_0^L + \int_0^L D*(du/dx)*(dphi/dx) dx    
+    # -[D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx    
     def __init__(self, D):
         self.coeff = D
     
@@ -242,7 +257,7 @@ class Diffusion:
 class Reaction:
     # R*u
     # weak form:
-    # \int_0^L R*u*phi dx
+    # \int_0^L R*u*v dx
     def __init__(self, R):
         self.coeff = R
     
@@ -262,7 +277,7 @@ class Reaction:
 class Advection:
     # A*u_x
     # weak form:
-    # \int_0^L A*(du/dx)*phi dx 
+    # \int_0^L A*(du/dx)*v dx 
     def __init__(self, A):
         self.coeff = A
         
@@ -320,8 +335,10 @@ class NaturalBoundary(DiscreteOperator):
             bt = self.generate_natural_boundary_term(operator, i)
             # assign contributions from boundary element i to every connected vertex (only 1 in 1D)
             for j in range(grid.elbmat.shape[1]):     
-                # grid.elbmat[i,j] is the index of the vertex
+                # each boundary vertex is associated with one test function (in 1D),
+                # which is associated with one equation
                 b[grid.elbmat[i,j]] += bt
+                # grid.elbmat[i,j] is the index of the vertex/test function/equation
         return b
     
     
@@ -388,12 +405,12 @@ class Solution(DiscreteOperator):
         # solve for solution values at vertices
         # these are actually the coefficients associated with the basis 
         # functions centered at each grid point    
-        u_vert = np.linalg.solve(s,h) 
+        c = np.linalg.solve(s,h) 
         # construct solution at arbitrary locations x, using basis functions
-        u = self.construct_solution(grid, discretization, u_vert, x)
+        u = self.construct_solution(grid, discretization, c, x)
         return u        
    
-    def construct_solution(self, grid, discretization, coeffs, sol_locs):
+    def construct_solution(self, grid, discretization, c, sol_locs):
         sol = np.zeros(len(sol_locs))
         # loop over solution coordinates
         for idx_sol, sol_loc in enumerate(sol_locs):
@@ -407,7 +424,7 @@ class Solution(DiscreteOperator):
                     # loop over bounding vertices
                     for j in range(grid.elmat.shape[1]): 
                         # we assume the basis functions and the rows of the elmat are ordered correspondingly
-                        sol[idx_sol] += coeffs[grid.elmat[i,j]]*discretization.basis_functions[j](sol_loc, x_i, dx_i)
+                        sol[idx_sol] += c[grid.elmat[i,j]]*discretization.basis_functions[j](sol_loc, x_i, dx_i)
                     # due to >= and <= signs in if statement it would be possible to double count this sol_loc
                     # so break this loop and move on to next sol_loc
                     break 
