@@ -107,18 +107,10 @@ class Source(DiscreteOperator):
     # f
     # weak form:
     # \int_0^L f*v dx
-    def __init__(self, grid, discretization, alpha, beta, gamma):
+    def __init__(self, grid, discretization, f):
         super().__init__(grid, discretization)
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
-        self.f = self.generate_periodic_source()
+        self.f = f
         self.d = self.assemble_source_vector()
-    
-    def generate_periodic_source(self):
-        # define f as a python function
-        f = lambda x : self.alpha + self.beta*np.sin(self.gamma*x)
-        return f
   
     def generate_integrand(self, test_function_xi, x_i, dx_i):
         f = self.f
