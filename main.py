@@ -256,7 +256,7 @@ def main():
         "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],
         "upper": ["sine", 0, 0, 0, 0, 0],
         "lower": ["sine", 0, 0, 0, 0, 0]
-        }
+    }
     # bc_params = {
     #     "left": ["sine", 0, 0, 0, 0, 0],
     #     "right": ["sine", 0, 0, 0, 0, 0],
