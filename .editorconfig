@@ -1,5 +1,0 @@
-root = true
-
-# Make sure new files are always created with LF line endings
-[*]
-end_of_line = lf
