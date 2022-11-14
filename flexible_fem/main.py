@@ -7,11 +7,11 @@ Created on Sun Feb 20 21:00:57 2022
 
 """
 
-
 # from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
+
 import exact as exact
 import fem_front as femf
 
@@ -49,7 +49,7 @@ def main():
     ### Input
  
     ## Reference input:
-    pde = "steady_diffusion_reaction_1D"
+    # pde = "steady_diffusion_reaction_1D"
     # bc = {
     # "left": ["neumann", 0],
     # "right": ["neumann", 0]
