@@ -6,6 +6,7 @@ Created on Thu Aug 25 12:32:48 2022
 """
 
 import numpy as np
+
 import fem_core as fem
     
 class NumericalSolution:
