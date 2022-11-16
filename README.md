@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/jfhbuist/flexible-fem/actions/workflows/CI.yml/badge.svg?event=push)](https://github.com/jfhbuist/flexible-fem/actions)
+[![codecov](https://codecov.io/gh/jfhbuist/flexible-fem/branch/master/graph/badge.svg?token=BFUOZDUQ6G)](https://codecov.io/gh/jfhbuist/flexible-fem)
 # 1D-FEM
 This is a one-dimensional standard Galerkin finite element code.
 It can solve steady state scalar equations, including advection, diffusion, and reaction operators, along with source terms.
