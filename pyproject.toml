@@ -1,5 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flexible-fem"
+version = "0.1.0"
+license = {file = "LICENSE.txt"}
+description = "A flexible finite element method package"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "matplotlib ~= 3.6.2",
+    "numpy ~= 1.23.5",
+    "scipy==1.9.3",
+    "sympy==1.11.1"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/jfhbuist/flexible-fem"
+
 [tool.pytest.ini_options]
-pythonpath = "src"
+addopts = [
+    "--import-mode=importlib",
+]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["flexible_fem"]
+omit = ["*/__init__.py"]

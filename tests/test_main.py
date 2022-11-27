@@ -1,7 +1,7 @@
 import numpy as np
 
-import exact as exact
-import fem_front as femf
+from flexible_fem import exact
+from flexible_fem import fem_front as femf
 
 
 def test_sdr_1D():

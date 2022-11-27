@@ -1,9 +1,4 @@
-### General
-
-# Specific:
-notes.txt
-scraps.txt
-tmp*
+# .gitignore
 
 # Exclude large files
 *.mp4
@@ -172,4 +167,4 @@ dmypy.json
 .pyre/
 
 # Editor settings
-.vscode/*
+.vscode/
