@@ -1,8 +1,8 @@
 ### General
 
 # Specific:
-notes.txt
-scraps.txt
+docs/notes.txt
+docs/scraps.txt
 tmp*
 
 # Exclude large files
@@ -172,4 +172,4 @@ dmypy.json
 .pyre/
 
 # Editor settings
-.vscode/*
+.vscode/

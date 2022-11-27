@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 import numpy as np
 
-import exact as exact
-import fem_front as femf
+from . import exact
+from . import fem_front as femf
 
     
 def plot_formatting_1D(ax, pde, bc, grid_params):
@@ -298,7 +298,7 @@ def main():
     plot_formatting_2D(ax, pde, bc, grid_params)
     
       
-if __name__=='__main__':
-    main()
+
+main()
   
 

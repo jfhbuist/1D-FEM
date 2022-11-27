@@ -7,7 +7,7 @@ Created on Thu Aug 25 12:32:48 2022
 
 import numpy as np
 
-import fem_core as fem
+from . import fem_core as fem
     
 class NumericalSolution:
     def get_solution(self, pde, bc, bc_params, grid_params, core_params, source_params):
