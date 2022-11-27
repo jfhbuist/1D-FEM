@@ -1,9 +1,4 @@
-### General
-
-# Specific:
-docs/notes.txt
-docs/scraps.txt
-tmp*
+# .gitignore
 
 # Exclude large files
 *.mp4
