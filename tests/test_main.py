@@ -24,8 +24,10 @@ def test_laplace_1D():
         "function": "zero"
         }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-14
 
@@ -56,8 +58,10 @@ def test_sad_1D():
         "gamma":    20
     }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-4
 
@@ -88,8 +92,10 @@ def test_sadr_1D():
         "gamma":    30
         }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-5
 
@@ -99,7 +105,7 @@ def test_sdr_1D():
     bc = {
         "left": ["neumann", 0],
         "right": ["neumann", 0]
-    } 
+    }
     bc_params = {
         "left": ["constant", 0],
         "right": ["constant", 0]
@@ -119,7 +125,9 @@ def test_sdr_1D():
         "gamma":    20
     }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-14

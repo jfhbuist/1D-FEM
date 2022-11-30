@@ -9,7 +9,7 @@ import flexible_fem as fem
 # bc = {
 #     "left": ["neumann", 0],
 #     "right": ["neumann", 0]
-# } 
+# }
 # bc_params = {
 #     "left": ["constant", 0],
 #     "right": ["constant", 0]
@@ -34,7 +34,7 @@ import flexible_fem as fem
 # bc = {
 #     "left": ["neumann", 0],
 #     "right": ["neumann", 0]
-# } 
+# }
 # bc_params = {
 #     "left": ["constant", 0],
 #     "right": ["constant", 0]
@@ -59,7 +59,7 @@ pde = "steady_diffusion_reaction_1D"
 bc = {
     "left": ["neumann", 0],
     "right": ["neumann", 0]
-} 
+}
 bc_params = {
     "left": ["constant", 0],
     "right": ["constant", 0]
@@ -79,9 +79,9 @@ source_params = {
     "gamma":    20
 }
 
-u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, 
+u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
-u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, 
+u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
 
 print(np.square(u_fem-u_exact).mean())
