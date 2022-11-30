@@ -7,7 +7,7 @@ Created on Thu Aug 25 12:32:48 2022
 
 import numpy as np
 
-from . import fem_core as fem
+from . import core
     
 class NumericalSolution:
     def get_solution(self, pde, bc, bc_params, grid_params, core_params, source_params):
@@ -58,26 +58,26 @@ class NumericalSolution:
         
         dim = 1
         
-        grid = fem.Grid(L, n)
+        grid = core.Grid(L, n)
         
-        discretization = fem.Discretization()
+        discretization = core.Discretization()
       
-        source = fem.Source(grid, discretization, f)
+        source = core.Source(grid, discretization, f)
         
-        diffusion = fem.Diffusion(D)
+        diffusion = core.Diffusion(D)
       
-        reaction = fem.Reaction(R)
+        reaction = core.Reaction(R)
       
         operators = [diffusion, reaction]
-        stiffness = fem.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.StiffnessMatrix(grid, discretization, operators)
         # print(stiffness.s)
         
-        natural_boundary = fem.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
         
         # specify points at which to return function:
         x = np.linspace(0,L,n) 
         
-        solution = fem.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
         u = solution.u
 
         return u, x
@@ -104,29 +104,29 @@ class NumericalSolution:
         
         dim = 1
         
-        grid = fem.Grid(L, n)
+        grid = core.Grid(L, n)
         
-        discretization = fem.Discretization()
+        discretization = core.Discretization()
       
-        source = fem.Source(grid, discretization, f)
+        source = core.Source(grid, discretization, f)
         # print(source.d)
         
-        advection = fem.Advection(A)
+        advection = core.Advection(A)
         
-        diffusion = fem.Diffusion(D)
+        diffusion = core.Diffusion(D)
       
-        reaction = fem.Reaction(R)
+        reaction = core.Reaction(R)
       
         operators = [advection, diffusion, reaction]
-        stiffness = fem.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.StiffnessMatrix(grid, discretization, operators)
         # print(stiffness.s)
         
-        natural_boundary = fem.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
         
         # specify points at which to return function:
         x = np.linspace(0,L,n) 
         
-        solution = fem.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
         u = solution.u
 
         return u, x
@@ -152,27 +152,27 @@ class NumericalSolution:
         
         dim = 1
         
-        grid = fem.Grid(L, n)
+        grid = core.Grid(L, n)
         
-        discretization = fem.Discretization()
+        discretization = core.Discretization()
       
-        source = fem.Source(grid, discretization, f)
+        source = core.Source(grid, discretization, f)
         # print(source.d)
         
-        advection = fem.Advection(A)
+        advection = core.Advection(A)
         
-        diffusion = fem.Diffusion(D)
+        diffusion = core.Diffusion(D)
       
         operators = [advection, diffusion]
-        stiffness = fem.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.StiffnessMatrix(grid, discretization, operators)
         # print(stiffness.s)
         
-        natural_boundary = fem.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
         
         # specify points at which to return function:
         x = np.linspace(0,L,n) 
         
-        solution = fem.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
         u = solution.u
 
         return u, x
@@ -192,24 +192,24 @@ class NumericalSolution:
         
         dim = 1
         
-        grid = fem.Grid(L, n)
+        grid = core.Grid(L, n)
         
-        discretization = fem.Discretization()
+        discretization = core.Discretization()
       
-        source = fem.Source(grid, discretization, f)
+        source = core.Source(grid, discretization, f)
         
-        diffusion = fem.Diffusion(D)
+        diffusion = core.Diffusion(D)
       
         operators = [diffusion]
-        stiffness = fem.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.StiffnessMatrix(grid, discretization, operators)
         # print(stiffness.s)
         
-        natural_boundary = fem.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
         
         # specify points at which to return function:
         x = np.linspace(0,L,n) 
         
-        solution = fem.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
         u = solution.u
 
         return u, x

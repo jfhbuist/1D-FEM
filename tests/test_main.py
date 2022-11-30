@@ -1,7 +1,6 @@
 import numpy as np
 
-from flexible_fem import exact
-from flexible_fem import fem_front as femf
+import flexible_fem as fem
 
 
 def test_sdr_1D():
@@ -9,8 +8,8 @@ def test_sdr_1D():
     # Reference input:
     pde = "steady_diffusion_reaction_1D"
     bc = {
-    "left": ["neumann", 0],
-    "right": ["neumann", 0]
+        "left": ["neumann", 0],
+        "right": ["neumann", 0]
     } 
     bc_params = {
         "left": ["constant", 0],
@@ -27,12 +26,11 @@ def test_sdr_1D():
     source_params = {
         "function": "periodic",
         "alpha":    0.5,
-        "beta" :    2,
+        "beta":     2,
         "gamma":    30
     }
 
-    u_exact, x_exact = exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
-    u_fem, x_fem = femf.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
-    
-    assert np.linalg.norm(u_fem-u_exact) < 10**-2
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params, core_params, source_params)
 
+    assert np.linalg.norm(u_fem-u_exact) < 10**-2
