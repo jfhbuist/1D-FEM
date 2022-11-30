@@ -21,6 +21,7 @@ Continuous Galerkin: Test functions equal to basis functions
 import numpy as np
 from scipy.integrate import quad
 
+
 def reduce_lambda(func, args):
     # this function takes a lambda function of multiple variables, and returns 
     # a lambda function of a single variable

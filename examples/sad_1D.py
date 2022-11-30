@@ -1,6 +1,7 @@
 # steady advection diffusion 1D
 
 import matplotlib.pyplot as plt
+import numpy as np
 import flexible_fem as fem
 
 pde = "steady_advection_diffusion_1D"
@@ -32,6 +33,8 @@ u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, gr
                                                           core_params, source_params)
 u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
+
+print(np.square(u_fem-u_exact).mean())
 
 fig = plt.figure()
 ax = fig.add_subplot()

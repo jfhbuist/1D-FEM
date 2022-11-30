@@ -8,10 +8,12 @@ Created on Thu Aug 25 17:23:49 2022
 import numpy as np
 import sympy as sp
 
+
 def broadcast(fun):
-    # this is needed when using lambdify, 
+    # this is needed when using lambdify,
     # to make a constant function return a vector when the input is a vector
     return lambda *x: np.broadcast_arrays(fun(*x), *x)[0]
+
 
 class ExactSolution:
     def get_solution(self, pde, bc, bc_params, grid_params, core_params, source_params):

@@ -8,15 +8,19 @@ Created on Thu Aug 25 12:32:48 2022
 import numpy as np
 
 from . import core
-    
+
+
 class NumericalSolution:
     def get_solution(self, pde, bc, bc_params, grid_params, core_params, source_params):
         if pde == 'steady_diffusion_reaction_1D':
-            u, x = self.steady_diffusion_reaction_1D(bc, bc_params, grid_params, core_params, source_params)
+            u, x = self.steady_diffusion_reaction_1D(bc, bc_params, grid_params,
+                                                     core_params, source_params)
         elif pde == 'steady_advection_diffusion_reaction_1D':
-            u, x = self.steady_advection_diffusion_reaction_1D(bc, bc_params, grid_params, core_params, source_params)
+            u, x = self.steady_advection_diffusion_reaction_1D(bc, bc_params, grid_params,
+                                                               core_params, source_params)
         elif pde == 'steady_advection_diffusion_1D':
-            u, x = self.steady_advection_diffusion_1D(bc, bc_params, grid_params, core_params, source_params)
+            u, x = self.steady_advection_diffusion_1D(bc, bc_params, grid_params,
+                                                      core_params, source_params)
         elif pde == 'laplace_1D':
             u, x = self.laplace_1D(bc, bc_params, grid_params, core_params, source_params)
         return u, x
