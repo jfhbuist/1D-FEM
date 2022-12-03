@@ -84,7 +84,7 @@ u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, gr
 u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
 
-print(np.square(u_fem-u_exact).mean())
+print("MSE = {0:.2e}".format(np.square(u_fem-u_exact).mean()))
 
 fig = plt.figure()
 ax = fig.add_subplot()

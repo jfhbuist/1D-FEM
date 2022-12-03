@@ -29,7 +29,7 @@ def test_laplace_1D():
     u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                               core_params, source_params)
 
-    assert np.square(u_fem-u_exact).mean() < 10**-14
+    assert np.square(u_fem-u_exact).mean() < 10**-12
 
 
 def test_sad_1D():
@@ -130,4 +130,4 @@ def test_sdr_1D():
     u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                               core_params, source_params)
 
-    assert np.square(u_fem-u_exact).mean() < 10**-14
+    assert np.square(u_fem-u_exact).mean() < 10**-12
