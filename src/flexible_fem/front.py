@@ -23,6 +23,8 @@ class NumericalSolution:
                                                       core_params, source_params)
         elif pde == 'laplace_1D':
             u, x = self.laplace_1D(bc, bc_params, grid_params, core_params, source_params)
+        elif pde == 'laplace_2D':
+            u, x = self.laplace_2D(bc, bc_params, grid_params, core_params, source_params)
         return u, x
 
     def steady_diffusion_reaction_1D(self, bc, bc_params, grid_params, core_params, source_params):
@@ -62,9 +64,9 @@ class NumericalSolution:
         # basis functions:
         # v_i = phi_i
 
-        # dim = 1
+        dim = 1
 
-        grid = core.Grid(L, n)
+        grid = core.Grid(dim, L, n)
 
         discretization = core.Discretization()
 
@@ -110,9 +112,9 @@ class NumericalSolution:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
         # + \int_0^L R*u*v dx = \int_0^L f*v dx
 
-        # dim = 1
+        dim = 1
 
-        grid = core.Grid(L, n)
+        grid = core.Grid(dim, L, n)
 
         discretization = core.Discretization()
 
@@ -160,9 +162,9 @@ class NumericalSolution:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
         # + \int_0^L R*u*v dx = \int_0^L f*v dx
 
-        # dim = 1
+        dim = 1
 
-        grid = core.Grid(L, n)
+        grid = core.Grid(dim, L, n)
 
         discretization = core.Discretization()
 
@@ -200,9 +202,9 @@ class NumericalSolution:
         # weak form:
         # \int_0^L - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx  = 0
 
-        # dim = 1
+        dim = 1
 
-        grid = core.Grid(L, n)
+        grid = core.Grid(dim, L, n)
 
         discretization = core.Discretization()
 
@@ -218,6 +220,47 @@ class NumericalSolution:
 
         # specify points at which to return function:
         x = np.linspace(0, L, n)
+
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        u = solution.u
+
+        return u, x
+
+    def laplace_2D(self, bc, bc_params, grid_params, core_params, source_params):
+        # Laplace equation:
+        # - D*(u_xx + u_yy) = 0
+        D = core_params["D"]
+        L = grid_params["L"]
+        nx = grid_params["nx"]
+        H = grid_params["H"]
+        ny = grid_params["ny"]
+
+        # zero source term:
+        f = lambda x: 0
+
+        # weak form:
+        # \int_0^L - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx  = 0
+
+        dim = 2
+
+        grid = core.Grid(dim, L, nx, H, ny)
+
+        discretization = core.Discretization()
+
+        source = core.Source(grid, discretization, f)
+
+        diffusion = core.Diffusion(D)
+
+        operators = [diffusion]
+        stiffness = core.StiffnessMatrix(grid, discretization, operators)
+        # print(stiffness.s)
+
+        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
+
+        # specify points at which to return function:
+        x = np.linspace(0, L, nx)
+        y = np.linspace(0, H, ny)
+        X, Y = np.meshgrid(x, y)
 
         solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
         u = solution.u

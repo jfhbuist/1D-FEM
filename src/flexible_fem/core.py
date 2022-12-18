@@ -32,44 +32,136 @@ def reduce_lambda(func, args):
 
 
 class Grid:
-    def __init__(self, L, n):
-        self.L = L
-        self.n = n
-        self.x_vert, self.x_elem, self.dx_elem, self.x_bound, self.loc_bound = self.generate_mesh()
-        self.elmat = self.generate_topology()
-        self.elbmat = self.generate_boundary_topology()
+    def __init__(self, dim, L, nx, H=None, ny=None):
+        if dim == 1:
+            n = nx
+            self.loc_bound = ["left", "right"]  # boundary element locations
+            self.x_vert, self.x_elem, self.x_bound, self.elmat, self.elbmat = self.generate_mesh_1D(L, n)
+        elif dim == 2:
+            self.loc_bound = ["left", "right", "bottom", "top"]  # boundary element locations
+            self.x_vert, self.x_elem, self.x_bound, self.elmat, self.elbmat = self.generate_mesh_2D(L, H, nx, ny)
 
-    def generate_mesh(self):
-        L = self.L
-        n = self.n
+    def generate_mesh_1D(self, L, n):
         x_vert = np.linspace(0, L, n)
         x_elem = (x_vert[0:n-1]+x_vert[1:n])/2
         # dx = 1/(n-1)
-        dx_elem = np.diff(x_vert)  # width of each element
         x_bound = np.array([0, L])  # boundary element coordinates
-        loc_bound = ["left", "right"]  # boundary element locations
-        return x_vert, x_elem, dx_elem, x_bound, loc_bound
 
-    def generate_topology(self):
-        n = self.n
         # This matrix lists the vertices of each element.
-        # ie for element i, evaluate elmat(i), to list the two vertices which
+        # ie for element i, evaluate elmat[i], to list the two vertices which
         # border element i
         elmat = np.zeros((n-1, 2)).astype(int)
         for idx, element in enumerate(elmat):
             elmat[idx, 0] = idx
             elmat[idx, 1] = idx + 1
-        return elmat
 
-    def generate_boundary_topology(self):
-        n = self.n
-        x_bound = self.x_bound
         # This matrix list the vertices of each boundary element.
         # ie for boundary element i, evaluate elbmat(i), to list the vertex to which it is connected
         elbmat = np.zeros((len(x_bound), 1)).astype(int)
         elbmat[0] = 0  # first boundary element is connected to vertex 0
         elbmat[1] = n-1  # last boundary element is connected to vertex n-1
-        return elbmat
+        return x_vert, x_elem, x_bound, elmat, elbmat
+
+    def generate_mesh_2D(self, L, H, nx, ny):
+        # Create vertices with coordinates
+        x = np.linspace(0, L, nx)
+        y = np.linspace(0, H, ny)
+        xm, ym = np.meshgrid(x, y)
+        x_vert = np.zeros((nx*ny, 2))
+        idx = 0
+        for i in range(nx):
+            for j in range(ny):
+                x_vert[idx] = np.array([xm[j, i], ym[j, i]])
+                idx += 1
+
+        # Create square elements with coordinates for their centers
+        x_shift = np.linspace(1/(2*(nx-1)), L-1/(2*(nx-1)), nx-1)
+        y_shift = np.linspace(1/(2*(ny-1)), H-1/(2*(ny-1)), ny-1)
+        xm_shift, ym_shift = np.meshgrid(x_shift, y_shift)
+        x_elem_square = np.zeros(((nx-1)*(ny-1), 2))
+        idx = 0
+        for i in range(nx-1):
+            for j in range(ny-1):
+                x_elem_square[idx] = np.array([xm_shift[j, i], ym_shift[j, i]])
+                idx += 1
+
+        # Make triangle elements, based on squares
+        # x_elem = np.zeros((2*len(x_elem_square), 2))
+        # elmat = np.zeros((2*len(x_elem_square), 3)).astype(int)
+        # for s_idx, s_elem in enumerate(x_elem_square):
+        #     t_idx = 2*s_idx
+        #     elmat[t_idx, 0] = s_idx  # lower left
+        #     elmat[t_idx, 1] = s_idx + nx + 2  # upper right
+        #     elmat[t_idx, 2] = s_idx + 1  # upper left
+        #     x_elem[t_idx] = (x_vert[elmat[t_idx, 0]] + x_vert[elmat[t_idx, 1]] + x_vert[elmat[t_idx, 2]])/3
+        #     t_idx += 1
+        #     elmat[t_idx, 0] = s_idx  # lower left
+        #     elmat[t_idx, 1] = s_idx + nx + 1  # lower right
+        #     elmat[t_idx, 2] = s_idx + nx + 2  # upper right
+        #     x_elem[t_idx] = (x_vert[elmat[t_idx, 0]] + x_vert[elmat[t_idx, 1]] + x_vert[elmat[t_idx, 2]])/3
+        #     a=1
+
+        # Make triangle elements, based on squares
+        x_elem = np.zeros((2*(nx-1)*(ny-1), 2))
+        elmat = np.zeros((len(x_elem), 3)).astype(int)
+        t_idx = 0
+        for i in range(nx-1):
+            for j in range(ny-1):
+                elmat[t_idx, 0] = i*ny+j  # lower left
+                elmat[t_idx, 1] = i*ny+ny+j+1  # upper right
+                elmat[t_idx, 2] = i*ny+j+1  # upper left
+                x_elem[t_idx] = (x_vert[elmat[t_idx, 0]] + x_vert[elmat[t_idx, 1]] + x_vert[elmat[t_idx, 2]])/3
+                t_idx += 1
+                elmat[t_idx, 0] = i*ny+j  # lower left
+                elmat[t_idx, 1] = i*ny+ny+j  # lower right
+                elmat[t_idx, 2] = i*ny+ny+j+1  # upper right
+                x_elem[t_idx] = (x_vert[elmat[t_idx, 0]] + x_vert[elmat[t_idx, 1]] + x_vert[elmat[t_idx, 2]])/3
+                t_idx += 1
+        # plt.scatter(x_elem[:,0],x_elem[:,1])
+
+        # Create boundary elements with coordinates for their centers
+        # x_bound = np.zeros((2*(nx-1)+2*(ny-1), 2))
+        # idx = 0
+        # for j in range(ny-1):  # left
+        #     x_bound[idx] = np.array([0, y_shift[j]])
+        #     idx += 1
+        # for j in range(ny-1):  # right
+        #     x_bound[idx] = np.array([L, y_shift[j]])
+        #     idx += 1
+        # for i in range(nx-1):  # bottom
+        #     x_bound[idx] = np.array([x_shift[i], 0])
+        #     idx += 1
+        # for i in range(nx-1):  # top
+        #     x_bound[idx] = np.array([x_shift[i], H])
+        #     idx += 1
+
+        # Create boundary elements with coordinates for their centers
+        x_bound = np.zeros((2*(nx-1)+2*(ny-1), 2))
+        elbmat = np.zeros((len(x_bound), 2)).astype(int)
+        b_idx = 0
+        for j in range(ny-1):  # left
+            elbmat[b_idx, 0] = 0 + j
+            elbmat[b_idx, 1] = 0 + j + 1
+            x_bound[b_idx] = (x_vert[elbmat[b_idx, 0]] + x_vert[elbmat[b_idx, 1]])/2
+            b_idx += 1
+        for j in range(ny-1):  # right
+            elbmat[b_idx, 0] = (nx-1)*ny + j
+            elbmat[b_idx, 1] = (nx-1)*ny + j + 1
+            x_bound[b_idx] = (x_vert[elbmat[b_idx, 0]] + x_vert[elbmat[b_idx, 1]])/2
+            b_idx += 1
+        for i in range(nx-1):  # bottom
+            elbmat[b_idx, 0] = 0 + i*ny
+            elbmat[b_idx, 1] = 0 + i*ny + ny
+            x_bound[b_idx] = (x_vert[elbmat[b_idx, 0]] + x_vert[elbmat[b_idx, 1]])/2
+            b_idx += 1
+        for i in range(nx-1):  # top
+            elbmat[b_idx, 0] = ny-1 + i*ny
+            elbmat[b_idx, 1] = ny-1 + i*ny + ny
+            x_bound[b_idx] = (x_vert[elbmat[b_idx, 0]] + x_vert[elbmat[b_idx, 1]])/2
+            b_idx += 1
+        # plt.scatter(x_bound[:,0],x_bound[:,1])
+
+        return x_vert, x_elem, x_bound, elmat, elbmat
 
 
 class Discretization:
@@ -127,10 +219,10 @@ class Source(DiscreteOperator):
         # Operates on vertices. For each vertex, sum the contributions of all
         # its neighbouring elements.
         grid = self.grid
-        d = np.zeros(grid.n)
+        d = np.zeros(len(grid.x_vert))
         for i, x_i in enumerate(grid.x_elem):  # loop over elements
             # x_i is center of current element
-            dx_i = grid.dx_elem[i]  # get width of current element
+            dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]  # get width of current element
             d_elem = self.generate_element_vector(x_i, dx_i)
             for j in range(grid.elmat.shape[1]):  # loop over equations for vertex coefficients
                 # Each equation is associated with one test function.
@@ -179,10 +271,10 @@ class StiffnessMatrix(DiscreteOperator):
         # basis function. In 1D this is composed of phi1 operating on its left
         # element, and phi0 operating on its right element.
         grid = self.grid
-        s = np.zeros((grid.n, grid.n))  # n = number of vertices
+        s = np.zeros((len(grid.x_vert), len(grid.x_vert)))  # n = number of vertices
         for i, x_i in enumerate(grid.x_elem):  # loop over elements
             # x_i is center of current element
-            dx_i = grid.dx_elem[i]  # get width of current element
+            dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]   # get width of current element
             s_elem = self.generate_element_matrix(operator, x_i, dx_i)
             for j in range(grid.elmat.shape[1]):  # loop over equations for vertex coefficients
                 # Each equation is associated with one test function.
@@ -303,7 +395,7 @@ class NaturalBoundary(DiscreteOperator):
         self.b_nat = self.combine_operators(operators)
 
     def combine_operators(self, operators):
-        b_nat = np.zeros(self.grid.n)
+        b_nat = np.zeros(len(self.grid.x_vert))
         for idx, operator in enumerate(operators):
             b_nat = b_nat + operator.b_nat
         return b_nat
@@ -325,7 +417,7 @@ class NaturalBoundary(DiscreteOperator):
     def assemble_natural_boundary_vector(self, operator):
         # Operates on vertices
         grid = self.grid
-        b = np.zeros(grid.n)
+        b = np.zeros(len(grid.x_vert))
         # loop over boundary elements
         for i, x_i in enumerate(grid.x_bound):  # x_i is center of current boundary element
             bt = self.generate_natural_boundary_term(operator, i)
@@ -365,7 +457,7 @@ class Solution(DiscreteOperator):
         # and move their contribution (in the equations for the interior nodes) to the right hand side
 
         # g is a vector containing set values for nodes lying on dirichlet boundary
-        g = np.zeros(grid.n)
+        g = np.zeros(len(grid.x_vert))
         for idx0, xb in enumerate(grid.x_bound):  # loop over boundary elements
             lb = grid.loc_bound[idx0]
             for idx1 in grid.elbmat[idx0]:  # loop over vertices connected to boundary element
@@ -412,7 +504,7 @@ class Solution(DiscreteOperator):
         for idx_sol, sol_loc in enumerate(sol_locs):
             # loop over elements
             for i, x_i in enumerate(grid.x_elem):  # x_i is center of current element
-                dx_i = grid.dx_elem[i]
+                dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]
                 if (sol_loc >= x_i - dx_i) and (sol_loc <= x_i + dx_i):
                     # coordinate is in this element
                     # get basis functions
