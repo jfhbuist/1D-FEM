@@ -1,5 +1,9 @@
 # .gitignore
 
+### Specific
+
+scrap/
+
 ### General
 
 # Exclude large files

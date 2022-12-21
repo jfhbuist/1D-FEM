@@ -178,8 +178,8 @@ class Discretization:
         # for a given element, phi0 is 1 at the left boundary vertex
         # for a given element, phi1 is 1 at the right boundary vertex
         # define as python function
-        phi0 = lambda x, x_i, dx_i: (x_i - x)/dx_i + 1/2  # (x1 - x )/dx # corresponds to elmat[i,0]
-        phi1 = lambda x, x_i, dx_i: (x - x_i)/dx_i + 1/2  # (x  - x0)/dx # corresponds to elmat[i,1]
+        phi0 = lambda x, x0, x1: (x1-x)/abs(x1-x0)  # corresponds to elmat[i,0]
+        phi1 = lambda x, x0, x1: (x-x0)/abs(x1-x0)  # corresponds to elmat[i,1]
         basis_functions = [phi0, phi1]
         return basis_functions
 
@@ -189,11 +189,14 @@ class DiscreteOperator:
         self.grid = grid
         self.discretization = discretization
 
-    def generate_basis_functions(self, x_i, dx_i):
+    def generate_basis_functions(self, vert_coords):
+        x0 = vert_coords[0]
+        x1 = vert_coords[1]
+        dx_i = abs(x1 - x0)
         general_basis_functions = self.discretization.basis_functions
         local_basis_functions = list()
         for idx, general_basis_function in enumerate(general_basis_functions):
-            local_basis_functions.append(reduce_lambda(general_basis_function, (x_i, dx_i)))
+            local_basis_functions.append(reduce_lambda(general_basis_function, (x0, x1)))
             # reduce_lambda necessary to eliminate elusive bug, where local basis function set in certain iteration, would change in subsequent iteration
         return local_basis_functions
 
@@ -207,11 +210,17 @@ class Source(DiscreteOperator):
         self.f = f
         self.d = self.assemble_source_vector()
 
-    def generate_integrand(self, test_function_xi, x_i, dx_i):
+    def generate_integrand(self, test_function, vert_coords):
+        x0 = vert_coords[0]
+        x1 = vert_coords[1]
+        dx_i = abs(x1 - x0)
         f = self.f
-        x0 = x_i - dx_i/2
-        # x1 = x_i + dx_i/2
-        f_xi = lambda xi: f(xi*dx_i+x0)  # transform f to function of xi
+        # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+        # transform test function to function of xi
+        test_function_xi = lambda xi: test_function(xi*dx_i+x0)
+        # transform f to function of xi
+        f_xi = lambda xi: f(xi*dx_i+x0)
+        # we integrate over xi, so multiply by dx to get integral over x
         integrand = lambda xi: f_xi(xi)*test_function_xi(xi)*dx_i
         return integrand
 
@@ -222,9 +231,9 @@ class Source(DiscreteOperator):
         d = np.zeros(len(grid.x_vert))
         for i, x_i in enumerate(grid.x_elem):  # loop over elements
             # x_i is center of current element
-            dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]  # get width of current element
-            d_elem = self.generate_element_vector(x_i, dx_i)
-            for j in range(grid.elmat.shape[1]):  # loop over equations for vertex coefficients
+            elem_vertices = grid.elmat[i]
+            d_elem = self.generate_element_vector(elem_vertices)
+            for j in range(len(elem_vertices)):  # loop over equations for vertex coefficients
                 # Each equation is associated with one test function.
                 # We are now considering the contribution of one element to two different equations (in 1D).
                 # Each equation is associated with two elements (in 1D).
@@ -235,18 +244,15 @@ class Source(DiscreteOperator):
                 # index: equation/test function
         return d
 
-    def generate_element_vector(self, x_i, dx_i):
+    def generate_element_vector(self, elem_vertices):
         # Operates on elements.
-        x0 = x_i - dx_i/2
-        # x1 = x_i + dx_i/2
+        grid = self.grid
+        vert_coords = [grid.x_vert[ev] for ev in elem_vertices]
         # get basis functions
-        basis_functions = self.generate_basis_functions(x_i, dx_i)
+        basis_functions = self.generate_basis_functions(vert_coords)
         d_elem = np.zeros(len(basis_functions))
         for j, test_function in enumerate(basis_functions):  # loop over test functions
-            # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
-            test_function_xi = lambda xi: test_function(xi*dx_i+x0)  # transform test function to function of xi
-            # we integrate over xi, so multiply by dx to get integral over x
-            integrand = self.generate_integrand(test_function_xi, x_i, dx_i)
+            integrand = self.generate_integrand(test_function, vert_coords)
             # integrate over element and put in element vector
             d_elem[j] = quad(integrand, 0, 1)[0]
         return d_elem
@@ -274,14 +280,15 @@ class StiffnessMatrix(DiscreteOperator):
         s = np.zeros((len(grid.x_vert), len(grid.x_vert)))  # n = number of vertices
         for i, x_i in enumerate(grid.x_elem):  # loop over elements
             # x_i is center of current element
-            dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]   # get width of current element
-            s_elem = self.generate_element_matrix(operator, x_i, dx_i)
-            for j in range(grid.elmat.shape[1]):  # loop over equations for vertex coefficients
+            elem_vertices = grid.elmat[i]
+            # dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]   # get width of current element
+            s_elem = self.generate_element_matrix(operator, elem_vertices)
+            for j in range(len(elem_vertices)):  # loop over equations for vertex coefficients
                 # Each equation is associated with one test function.
                 # We are now considering the contribution of one element to two different equations (in 1D).
                 # Each equation is associated with two elements (in 1D).
                 # So the equation will be revisted when considering a different element.
-                for k in range(grid.elmat.shape[1]):  # loop over solution basis functions
+                for k in range(len(elem_vertices)):  # loop over solution basis functions
                     # Each basis function is associated with one vertex.
                     # For each element-equation combination, there are two contributing vertices (in 1D).
                     # Each vertex is associated with two equations and two elements (in 1D).
@@ -292,22 +299,19 @@ class StiffnessMatrix(DiscreteOperator):
                     # first index: equation/test function, second index: vertex coefficient/basis function
         return s
 
-    def generate_element_matrix(self, operator, x_i, dx_i):
+    def generate_element_matrix(self, operator, elem_vertices):
         # Element matrix, operates on elements.
         # Matrix should be symmetric. Numerical calculation.
         # get vertex coordinates
-        x0 = x_i - dx_i/2  # location of left boundary vertex
-        # x1 = x_i + dx_i/2  # location of right boundary vertex
+        grid = self.grid
+        vert_coords = [grid.x_vert[ev] for ev in elem_vertices]
         # get basis functions
-        basis_functions = self.generate_basis_functions(x_i, dx_i)
+        basis_functions = self.generate_basis_functions(vert_coords)
         # calculate s_ij
         s_elem = np.zeros((len(basis_functions), len(basis_functions)))
         for j, test_function in enumerate(basis_functions):  # loop over test functions
             for k, basis_function in enumerate(basis_functions):  # loop over solution basis functions
-                # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
-                test_function_xi = lambda xi: test_function(xi*dx_i+x0)  # transform test function to function of xi
-                basis_function_xi = lambda xi: basis_function(xi*dx_i+x0)  # transform basis function to function of xi
-                integrand = operator.generate_integrand(test_function_xi, basis_function_xi, x_i, dx_i)
+                integrand = operator.generate_integrand(test_function, basis_function, vert_coords)
                 # integrate over element and put in element matrix
                 s_elem[j, k] = quad(integrand, 0, 1)[0]
         return s_elem
@@ -320,8 +324,15 @@ class Diffusion:
     def __init__(self, D):
         self.coeff = D
 
-    def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
+    def generate_integrand(self, test_function, basis_function, vert_coords):
         # generate integrand for diffusion
+        x0 = vert_coords[0]
+        x1 = vert_coords[1]
+        dx_i = abs(x1 - x0)
+        # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+        test_function_xi = lambda xi: test_function(xi*dx_i+x0)  # transform test function to function of xi
+        basis_function_xi = lambda xi: basis_function(xi*dx_i+x0)  # transform basis function to function of xi
+
         # calculate numerical derivative of function using central scheme
         ddx = lambda func, x, dx: (func(x+dx/4)-func(x-dx/4))/(dx/2)
         # multiply ddxi by (1/dx) to get ddx (as function of xi)
@@ -349,8 +360,15 @@ class Reaction:
     def __init__(self, R):
         self.coeff = R
 
-    def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
+    def generate_integrand(self, test_function, basis_function, vert_coords):
         # generate integrand for reaction
+        x0 = vert_coords[0]
+        x1 = vert_coords[1]
+        dx_i = abs(x1 - x0)
+        # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+        test_function_xi = lambda xi: test_function(xi*dx_i+x0)  # transform test function to function of xi
+        basis_function_xi = lambda xi: basis_function(xi*dx_i+x0)  # transform basis function to function of xi
+
         # we integrate over xi, so multiply by dx to get integral over x
         integrand = lambda xi: (self.coeff*test_function_xi(xi)*basis_function_xi(xi))*dx_i
         # integrate over element and put in element matrix
@@ -369,8 +387,15 @@ class Advection:
     def __init__(self, A):
         self.coeff = A
 
-    def generate_integrand(self, test_function_xi, basis_function_xi, x_i, dx_i):
+    def generate_integrand(self, test_function, basis_function, vert_coords):
         # generate integrand for linear advection
+        x0 = vert_coords[0]
+        x1 = vert_coords[1]
+        dx_i = abs(x1 - x0)
+        # Use coordinate transformation xi = (x - x_i)/dx, dxi/dx = 1/dx, dx = dx dxi
+        test_function_xi = lambda xi: test_function(xi*dx_i+x0)  # transform test function to function of xi
+        basis_function_xi = lambda xi: basis_function(xi*dx_i+x0)  # transform basis function to function of xi
+
         # calculate numerical derivative of function using central scheme
         ddx = lambda func, x, dx: (func(x+dx/4)-func(x-dx/4))/(dx/2)
         # multiply ddxi by (1/dx) to get ddx (as function of xi)
@@ -504,15 +529,19 @@ class Solution(DiscreteOperator):
         for idx_sol, sol_loc in enumerate(sol_locs):
             # loop over elements
             for i, x_i in enumerate(grid.x_elem):  # x_i is center of current element
-                dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]
-                if (sol_loc >= x_i - dx_i) and (sol_loc <= x_i + dx_i):
+                # dx_i = grid.x_vert[grid.elmat[i][1]] - grid.x_vert[grid.elmat[i][0]]
+                elem_vertices = grid.elmat[i]
+                vert_coords = [grid.x_vert[ev] for ev in elem_vertices]
+                x0 = vert_coords[0]
+                x1 = vert_coords[1]
+                if (sol_loc >= x0) and (sol_loc <= x1):
                     # coordinate is in this element
                     # get basis functions
                     # basis_functions = self.generate_basis_functions(x_i, dx_i)
                     # loop over bounding vertices
                     for j in range(grid.elmat.shape[1]):
                         # we assume the basis functions and the rows of the elmat are ordered correspondingly
-                        sol[idx_sol] += c[grid.elmat[i, j]]*discretization.basis_functions[j](sol_loc, x_i, dx_i)
+                        sol[idx_sol] += c[grid.elmat[i, j]]*discretization.basis_functions[j](sol_loc, x0, x1)
                     # due to >= and <= signs in if statement it would be possible to double count this sol_loc
                     # so break this loop and move on to next sol_loc
                     break
