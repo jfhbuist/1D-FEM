@@ -32,8 +32,8 @@ source_params = {
 
 u_exact, x_exact, y_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
                                                                    core_params, source_params)
-# u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
-#                                                          core_params, source_params)
+u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                          core_params, source_params)
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')

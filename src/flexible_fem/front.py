@@ -68,19 +68,19 @@ class NumericalSolution:
 
         grid = core.Grid(dim, L, n)
 
-        discretization = core.Discretization()
+        discretization = core.Discretization(dim)
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(D)
+        diffusion = core.Diffusion(grid, discretization, bc, D)
 
-        reaction = core.Reaction(R)
+        reaction = core.Reaction(grid, discretization, bc, R)
 
         operators = [diffusion, reaction]
-        stiffness = core.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
         x = np.linspace(0, L, n)
@@ -116,22 +116,22 @@ class NumericalSolution:
 
         grid = core.Grid(dim, L, n)
 
-        discretization = core.Discretization()
+        discretization = core.Discretization(dim)
 
         source = core.Source(grid, discretization, f)
         # print(source.d)
 
-        advection = core.Advection(A)
+        advection = core.Advection(grid, discretization, bc, A)
 
-        diffusion = core.Diffusion(D)
+        diffusion = core.Diffusion(grid, discretization, bc, D)
 
-        reaction = core.Reaction(R)
+        reaction = core.Reaction(grid, discretization, bc, R)
 
         operators = [advection, diffusion, reaction]
-        stiffness = core.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
         x = np.linspace(0, L, n)
@@ -166,20 +166,20 @@ class NumericalSolution:
 
         grid = core.Grid(dim, L, n)
 
-        discretization = core.Discretization()
+        discretization = core.Discretization(dim)
 
         source = core.Source(grid, discretization, f)
         # print(source.d)
 
-        advection = core.Advection(A)
+        advection = core.Advection(grid, discretization, bc, A)
 
-        diffusion = core.Diffusion(D)
+        diffusion = core.Diffusion(grid, discretization, bc, D)
 
         operators = [advection, diffusion]
-        stiffness = core.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
         x = np.linspace(0, L, n)
@@ -206,17 +206,17 @@ class NumericalSolution:
 
         grid = core.Grid(dim, L, n)
 
-        discretization = core.Discretization()
+        discretization = core.Discretization(dim)
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(D)
+        diffusion = core.Diffusion(grid, discretization, bc, D)
 
         operators = [diffusion]
-        stiffness = core.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
         x = np.linspace(0, L, n)
@@ -245,17 +245,17 @@ class NumericalSolution:
 
         grid = core.Grid(dim, L, nx, H, ny)
 
-        discretization = core.Discretization()
+        discretization = core.Discretization(dim)
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(D)
+        diffusion = core.Diffusion(grid, discretization, bc, D)
 
         operators = [diffusion]
-        stiffness = core.StiffnessMatrix(grid, discretization, operators)
+        stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, operators, bc)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
         x = np.linspace(0, L, nx)
