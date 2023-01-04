@@ -188,13 +188,15 @@ class ExactSolution:
     def solve_for_bc_1D(self, bc, L, mu_0, mu_1, x, up, dupdx):
         # we need to solve for c0 and c1 using the boundary conditions
         # we will get an equation of the form A*c = B, with c = [c0; c1].
+        # dirichlet bc: set value of solution at boundary
+        # neumann bc: set value of normal gradient of solution at boundary
         A = np.zeros((2, 2))
         B = np.zeros(2)
         if bc["left"][0] == "neumann":
-            # mu_0*c0 + mu_1*c1 + dupdx(0) = bc(left)
-            A[0, 0] = mu_0
-            A[0, 1] = mu_1
-            B[0] = -dupdx.subs(x, 0) + bc["left"][1]
+            # -(mu_0*c0 + mu_1*c1 + dupdx(0)) = bc(left)
+            A[0, 0] = -mu_0
+            A[0, 1] = -mu_1
+            B[0] = dupdx.subs(x, 0) + bc["left"][1]
         elif bc["left"][0] == "dirichlet":
             # c0 + c1 + up(0) = bc(left)
             A[0, 0] = 1
@@ -232,12 +234,15 @@ class ExactSolution:
         # u = uc
         # constants are set through boundary conditions
 
+        # dirichlet bc: set value of solution at boundary
+        # neumann bc: set value of normal gradient of solution at boundary
+
         A = np.zeros((2, 2))
         B = np.zeros(2)
         if bc["left"][0] == "neumann":
-            # c1 = bc(left)
+            # -c1 = bc(left)
             A[0, 0] = 0
-            A[0, 1] = 1
+            A[0, 1] = -1
             B[0] = bc["left"][1]
         elif bc["left"][0] == "dirichlet":
             # c0 = bc(left)

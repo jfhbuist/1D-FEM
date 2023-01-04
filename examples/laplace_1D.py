@@ -5,9 +5,11 @@ import numpy as np
 import flexible_fem as fem
 
 pde = "laplace_1D"
+# neumann bc: set value of gradient of solution normal to boundary
+# dirichlet bc: set value of solution at boundary
 bc = {
-    "left": ["dirichlet", 2],
-    "right": ["neumann", -1]
+    "left": ["neumann", -1],
+    "right": ["dirichlet", 2]
 }
 bc_params = {
     "left": ["constant", 1],

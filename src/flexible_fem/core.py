@@ -37,11 +37,9 @@ class Grid:
         self.dim = dim
         if self.dim == 1:
             n = nx
-            self.loc_bound = ["left", "right"]  # boundary element locations
-            self.xyz_vert, self.xyz_elem, self.xyz_bound, self.elmat, self.belmat = self.generate_mesh_1D(L, n)
+            self.xyz_vert, self.xyz_elem, self.xyz_bound, self.elmat, self.belmat, self.loc_bound = self.generate_mesh_1D(L, n)
         elif self.dim == 2:
-            self.loc_bound = ["left", "right", "bottom", "top"]  # boundary element locations
-            self.xyz_vert, self.xyz_elem, self.xyz_bound, self.elmat, self.belmat = self.generate_mesh_2D(L, H, nx, ny)
+            self.xyz_vert, self.xyz_elem, self.xyz_bound, self.elmat, self.belmat, self.loc_bound = self.generate_mesh_2D(L, H, nx, ny)
 
     def generate_mesh_1D(self, L, n):
         xyz_vert = np.linspace(0, L, n)
@@ -60,9 +58,12 @@ class Grid:
         # This matrix list the vertices of each boundary element.
         # ie for boundary element i, evaluate belmat(i), to list the vertex to which it is connected
         belmat = np.zeros((len(xyz_bound), 1)).astype(int)
+        loc_bound = []  # boundary element locations
         belmat[0] = 0  # first boundary element is connected to vertex 0
+        loc_bound.append("left")
         belmat[1] = n-1  # last boundary element is connected to vertex n-1
-        return xyz_vert, xyz_elem, xyz_bound, elmat, belmat
+        loc_bound.append("right")
+        return xyz_vert, xyz_elem, xyz_bound, elmat, belmat, loc_bound
 
     def generate_mesh_2D(self, L, H, nx, ny):
         # Create vertices with coordinates
@@ -97,30 +98,35 @@ class Grid:
         # Create boundary elements with coordinates for their centers
         xyz_bound = np.zeros((2*(nx-1)+2*(ny-1), 2))
         belmat = np.zeros((len(xyz_bound), 2)).astype(int)
+        loc_bound = []  # boundary element locations
         b_idx = 0
         for j in range(ny-1):  # left
             belmat[b_idx, 0] = 0 + j
             belmat[b_idx, 1] = 0 + j + 1
             xyz_bound[b_idx] = (xyz_vert[belmat[b_idx, 0]] + xyz_vert[belmat[b_idx, 1]])/2
+            loc_bound.append("left")
             b_idx += 1
         for j in range(ny-1):  # right
             belmat[b_idx, 0] = (nx-1)*ny + j
             belmat[b_idx, 1] = (nx-1)*ny + j + 1
             xyz_bound[b_idx] = (xyz_vert[belmat[b_idx, 0]] + xyz_vert[belmat[b_idx, 1]])/2
+            loc_bound.append("right")
             b_idx += 1
         for i in range(nx-1):  # bottom
             belmat[b_idx, 0] = 0 + i*ny
             belmat[b_idx, 1] = 0 + i*ny + ny
             xyz_bound[b_idx] = (xyz_vert[belmat[b_idx, 0]] + xyz_vert[belmat[b_idx, 1]])/2
+            loc_bound.append("bottom")
             b_idx += 1
         for i in range(nx-1):  # top
             belmat[b_idx, 0] = ny-1 + i*ny
             belmat[b_idx, 1] = ny-1 + i*ny + ny
             xyz_bound[b_idx] = (xyz_vert[belmat[b_idx, 0]] + xyz_vert[belmat[b_idx, 1]])/2
+            loc_bound.append("top")
             b_idx += 1
         # plt.scatter(xyz_bound[:,0],xyz_bound[:,1])
 
-        return xyz_vert, xyz_elem, xyz_bound, elmat, belmat
+        return xyz_vert, xyz_elem, xyz_bound, elmat, belmat, loc_bound
 
 
 class Discretization:
@@ -128,21 +134,36 @@ class Discretization:
         self.dim = dim
         # self.basis_functions = self.define_basis_functions()
 
-    def generate_basis_functions(self, vert_coords):
+    def generate_basis_functions(self, vert_coords, boundary=False):
         # Generate basis or test functions for current element (fill in vertex coordinates)
         vert_coords_flat = tuple(np.array(vert_coords).reshape(-1))
-        general_basis_functions = self.define_basis_functions()
+        general_basis_functions = self.define_basis_functions(boundary)
         local_basis_functions = list()
         for idx, general_basis_function in enumerate(general_basis_functions):
             local_basis_functions.append(reduce_lambda(general_basis_function, vert_coords_flat))
             # reduce_lambda necessary to eliminate elusive bug, where local basis function set in certain iteration, would change in subsequent iteration
         return local_basis_functions
 
-    def define_basis_functions(self):
-        if self.dim == 1:
+    def define_basis_functions(self, boundary=False):
+        if boundary:
+            dim = self.dim - 1
+        else:
+            dim = self.dim
+        if dim == 0:
+            basis_functions = self.define_basis_functions_0D()
+        elif dim == 1:
             basis_functions = self.define_basis_functions_1D()
-        elif self.dim == 2:
+        elif dim == 2:
             basis_functions = self.define_basis_functions_2D()
+        return basis_functions
+
+    def define_basis_functions_0D(self):
+        # Define basis functions for a zero-width element defined by one vertex
+        # x0 is the only bounding vertex, and is also the midpoint of the element
+        # ph0 is 1 at x0, and zero elsewhere
+        # define as python function
+        phi0 = lambda x, x0: 1
+        basis_functions = [phi0]
         return basis_functions
 
     def define_basis_functions_1D(self):
@@ -178,11 +199,17 @@ class Discretization:
         basis_functions = [phi0, phi1, phi2]
         return basis_functions
 
-    def coordinate_transformation(self, vert_coords, function_x):
+    def coordinate_transformation(self, vert_coords, function_x, boundary=False):
         # Transform function of x to function of xi
-        if self.dim == 1:
+        if boundary:
+            dim = self.dim - 1
+        else:
+            dim = self.dim
+        if dim == 0:
+            function_xi = function_x
+        elif dim == 1:
             function_xi = self.coordinate_transformation_1D(vert_coords, function_x)
-        elif self.dim == 2:
+        elif dim == 2:
             function_xi = self.coordinate_transformation_2D(vert_coords, function_x)
         return function_xi
 
@@ -213,12 +240,29 @@ class Discretization:
         function_x = lambda x: function_xi((x - x0)/dx_i)
         return function_x
 
-    def integrate_element(self, vert_coords, integrand):
+    def integrate_element(self, vert_coords, integrand, boundary=False):
         # Integrate function of xi over element
-        if self.dim == 1:
+        if boundary:
+            dim = self.dim - 1
+        else:
+            dim = self.dim
+        if dim == 0:
+            result = self.integrate_element_0D(vert_coords, integrand)
+        elif dim == 1:
             result = self.integrate_element_1D(vert_coords, integrand)
-        elif self.dim == 2:
+        elif dim == 2:
             result = self.integrate_element_2D(vert_coords, integrand)
+        return result
+
+    def integrate_element_0D(self, vert_coords, integrand):
+        # Integrate 1D function of xi over 0D element
+        x_i = vert_coords[0]
+        # We need to integrate over the boundary.
+        # We assume the boundary conditions are for the component normal to the boundary.
+        # So we do not have to add minus signs to some boundaries.
+        # The length of the boundary element is zero, so the integral is equal to the integrand,
+        # evaluated at the vertex
+        result = integrand(x_i)
         return result
 
     def integrate_element_1D(self, vert_coords, integrand):
@@ -313,8 +357,8 @@ class SourceOperator:
         # its neighbouring elements.
         grid = self.grid
         d = np.zeros(len(grid.xyz_vert))
-        for i, x_i in enumerate(grid.xyz_elem):  # loop over elements
-            # x_i is center of current element
+        for i, xyz_i in enumerate(grid.xyz_elem):  # loop over elements
+            # xyz_i is center of current element
             elem_vertices = grid.elmat[i]
             d_elem = self.generate_element_vector(elem_vertices)
             for j in range(len(elem_vertices)):  # loop over equations for vertex coefficients
@@ -384,10 +428,9 @@ class SolutionOperator():
         # element, and phi0 operating on its right element.
         grid = self.grid
         s = np.zeros((len(grid.xyz_vert), len(grid.xyz_vert)))  # n = number of vertices
-        for i, x_i in enumerate(grid.xyz_elem):  # loop over elements
-            # x_i is center of current element
+        for i, xyz_i in enumerate(grid.xyz_elem):  # loop over elements
+            # xyz_i is center of current element
             elem_vertices = grid.elmat[i]
-            # dx_i = grid.xyz_vert[grid.elmat[i][1]] - grid.xyz_vert[grid.elmat[i][0]]   # get width of current element
             s_elem = self.generate_element_matrix(elem_vertices)
             for j in range(len(elem_vertices)):  # loop over equations for vertex coefficients
                 # Each equation is associated with one test function.
@@ -437,30 +480,37 @@ class NaturalBoundary():
             b_nat = b_nat + operator.b_nat
         return b_nat
 
-    def generate_natural_boundary_term(self, boundary_element_idx):
+    def generate_natural_boundary_term(self, belem_vertices, lb):
         # Operates on boundary element
         # natural boundary conditions are implicitly satisfied by the formulation
         grid = self.grid
+        discretization = self.discretization
         bc = self.bc
-        xb = grid.xyz_bound[boundary_element_idx]
-        lb = grid.loc_bound[boundary_element_idx]
-        integrand = self.generate_boundary_integrand(bc, xb, lb)
-        # We need to integrate over the boundary. In 1D this entails flipping the sign of left boundary condition.
-        if lb == 'left':
-            bt = - integrand
-        elif lb == 'right':
-            bt = integrand
-        return bt
+        vert_coords = [grid.xyz_vert[ev] for ev in belem_vertices]
+        # get bc
+        bc_type = bc[lb][0]
+        bc_value = bc[lb][1]
+        # get basis functions
+        basis_functions = discretization.generate_basis_functions(vert_coords, True)
+        b_elem = np.zeros(len(basis_functions))
+        for j, test_function in enumerate(basis_functions):  # loop over test functions
+            integrand = self.generate_boundary_integrand(test_function, vert_coords, bc_type, bc_value)
+            # integrate over element and put in element vector
+            b_elem[j] = discretization.integrate_element(vert_coords, integrand, True)
+        return b_elem
 
     def assemble_natural_boundary_vector(self):
         # Operates on vertices
         grid = self.grid
         b = np.zeros(len(grid.xyz_vert))
         # loop over boundary elements
-        for i, x_i in enumerate(grid.xyz_bound):  # x_i is center of current boundary element
-            bt = self.generate_natural_boundary_term(i)
+        for i, xyz_i in enumerate(grid.xyz_bound):
+            # xyz_i is center of current boundary element
+            belem_vertices = grid.belmat[i]
+            lb = grid.loc_bound[i]
+            bt = self.generate_natural_boundary_term(belem_vertices, lb)
             # assign contributions from boundary element i to every connected vertex (only 1 in 1D)
-            for j in range(grid.belmat.shape[1]):
+            for j in range(len(belem_vertices)):
                 # each boundary vertex is associated with one test function (in 1D),
                 # which is associated with one equation
                 b[grid.belmat[i, j]] += bt
@@ -488,14 +538,16 @@ class Diffusion(SolutionOperator, NaturalBoundary):
         integrand = lambda xi: self.coeff*discretization.differentiate(vert_coords, test_function_xi)(xi)*discretization.differentiate(vert_coords, basis_function_xi)(xi)
         return integrand
 
-    def generate_boundary_integrand(self, bc, xyz_bound, loc_bound):
+    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
         # since we reduce the order of the diffusion operator through integration by parts, boundary terms appear, which must be added to the equation
         # since this term will be added to right-hand side, it gets a minus sign
-        if bc[loc_bound][0] == "neumann":
+        discretization = self.discretization
+        if bc_type == "neumann":
             # in 1D case there is nothing to integrate, test function at boundary is just 1
-            integrand = self.coeff*bc[loc_bound][1]*1
+            test_function_xi = discretization.coordinate_transformation(vert_coords, test_function, True)  # transform test function to function of xi
+            integrand = lambda xi: self.coeff*bc_value*test_function_xi(xi)
         else:
-            integrand = 0
+            integrand = lambda xi: 0
         return integrand
 
 
@@ -520,9 +572,9 @@ class Reaction(SolutionOperator, NaturalBoundary):
         integrand = lambda xi: self.coeff*test_function_xi(xi)*basis_function_xi(xi)
         return integrand
 
-    def generate_boundary_integrand(self, bc, xyz_bound, loc_bound):
+    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
         # the boundary terms are zero for the reaction operator, since there is no integration by parts
-        integrand = 0
+        integrand = lambda xi: 0
         return integrand
 
 
@@ -547,9 +599,9 @@ class Advection(SolutionOperator, NaturalBoundary):
         integrand = lambda xi: self.coeff*discretization.differentiate(vert_coords, basis_function_xi)(xi)*test_function_xi(xi)
         return integrand
 
-    def generate_boundary_integrand(self, bc, xyz_bound, loc_bound):
+    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
         # the boundary terms are zero for the advection operator, since there is no integration by parts
-        integrand = 0
+        integrand = lambda xi: 0
         return integrand
 
 
@@ -584,11 +636,13 @@ class Solution():
         g = np.zeros(len(grid.xyz_vert))
         for idx0, xb in enumerate(grid.xyz_bound):  # loop over boundary elements
             lb = grid.loc_bound[idx0]
+            bc_type = bc[lb][0]
+            bc_value = bc[lb][1]
             for idx1 in grid.belmat[idx0]:  # loop over vertices connected to boundary element
                 # xv = grid.xyz_vert[idx1]  # position of vertex
-                if bc[lb][0] == "dirichlet":
+                if bc_type == "dirichlet":
                     # set value for this boundary node
-                    g[idx1] = bc[lb][1]
+                    g[idx1] = bc_value
 
         # right-hand side contains contributions from source, natural boundary conditions, and dirichlet boundary conditions
         h = d + b_nat - np.matmul(s, g)
@@ -599,9 +653,10 @@ class Solution():
         # modify stiffness matrix and rhs vector to implement dirichlet boundary conditions
         for idx0, xb in enumerate(grid.xyz_bound):  # loop over boundary elements
             lb = grid.loc_bound[idx0]
+            bc_type = bc[lb][0]
             for idx1 in grid.belmat[idx0]:  # loop over vertices connected to boundary element
                 # xv = grid.xyz_vert[idx1]  # position of vertex
-                if bc[lb][0] == "dirichlet":
+                if bc_type == "dirichlet":
                     # eliminate row in stiffness matrix and replace with diagonal 1
                     # this way we get an equation such that 1*boundary_vertex = ...
                     s[idx1] = 0
@@ -628,8 +683,7 @@ class Solution():
         # loop over solution coordinates
         for idx_sol, sol_loc in enumerate(sol_locs):
             # loop over elements
-            for i, x_i in enumerate(grid.xyz_elem):  # x_i is center of current element
-                # dx_i = grid.xyz_vert[grid.elmat[i][1]] - grid.xyz_vert[grid.elmat[i][0]]
+            for i, xyz_i in enumerate(grid.xyz_elem):  # xyz_i is center of current element
                 elem_vertices = grid.elmat[i]
                 vert_coords = [grid.xyz_vert[ev] for ev in elem_vertices]
                 if discretization.check_if_point_in_element(vert_coords, sol_loc):
@@ -640,7 +694,7 @@ class Solution():
                     for j in range(grid.elmat.shape[1]):
                         # we assume the basis functions and the rows of the elmat are ordered correspondingly
                         sol[idx_sol] += c[grid.elmat[i, j]]*basis_functions[j](sol_loc)
-                    # due to >= and <= signs in if statement it would be possible to double count this sol_loc
+                    # due to details of the check it would be possible to double count this sol_loc
                     # so break this loop and move on to next sol_loc
                     break
         return sol

@@ -6,9 +6,10 @@ import flexible_fem as fem
 
 # # Reference input:
 pde = "steady_diffusion_reaction_1D"
+# neumann bc: set value of gradient of solution normal to boundary
 bc = {
-    "left": ["neumann", 0],
-    "right": ["neumann", 0]
+    "left": ["neumann", -1.5],
+    "right": ["neumann", -0.5]
 }
 bc_params = {
     "left": ["constant", 0],
@@ -16,7 +17,7 @@ bc_params = {
 }
 grid_params = {
     "L": 1,
-    "n": 5
+    "n": 100
 }
 core_params = {
     "D":        1,
@@ -24,9 +25,9 @@ core_params = {
 }
 source_params = {
     "function": "periodic",
-    "alpha":    0.5,
+    "alpha":    2.5,
     "beta":     2,
-    "gamma":    30
+    "gamma":    5
 }
 
 # # set 12
