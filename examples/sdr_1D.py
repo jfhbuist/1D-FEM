@@ -5,29 +5,30 @@ import numpy as np
 import flexible_fem as fem
 
 # # Reference input:
-# pde = "steady_diffusion_reaction_1D"
-# bc = {
-#     "left": ["neumann", 0],
-#     "right": ["neumann", 0]
-# }
-# bc_params = {
-#     "left": ["constant", 0],
-#     "right": ["constant", 0]
-# }
-# grid_params = {
-#     "L": 1,
-#     "n": 5
-# }
-# core_params = {
-#     "D":        1,
-#     "R":        0.8
-# }
-# source_params = {
-#     "function": "periodic",
-#     "alpha":    0.5,
-#     "beta":     2,
-#     "gamma":    30
-# }
+pde = "steady_diffusion_reaction_1D"
+# neumann bc: set value of gradient of solution normal to boundary
+bc = {
+    "left": ["neumann", -1.5],
+    "right": ["neumann", -0.5]
+}
+bc_params = {
+    "left": ["constant", 0],
+    "right": ["constant", 0]
+}
+grid_params = {
+    "L": 1,
+    "n": 100
+}
+core_params = {
+    "D":        1,
+    "R":        0.8
+}
+source_params = {
+    "function": "periodic",
+    "alpha":    2.5,
+    "beta":     2,
+    "gamma":    5
+}
 
 # # set 12
 # pde = "steady_diffusion_reaction_1D"
@@ -54,37 +55,37 @@ import flexible_fem as fem
 #     "gamma":    0,
 # }
 
-# set 13
-pde = "steady_diffusion_reaction_1D"
-bc = {
-    "left": ["neumann", 0],
-    "right": ["neumann", 0]
-}
-bc_params = {
-    "left": ["constant", 0],
-    "right": ["constant", 0]
-}
-grid_params = {
-    "L": 1,
-    "n": 100
-}
-core_params = {
-    "D":        1,
-    "R":        1
-}
-source_params = {
-    "function": "periodic",
-    "alpha":    0,
-    "beta":     1,
-    "gamma":    20
-}
+# # set 13
+# pde = "steady_diffusion_reaction_1D"
+# bc = {
+#     "left": ["neumann", 0],
+#     "right": ["neumann", 0]
+# }
+# bc_params = {
+#     "left": ["constant", 0],
+#     "right": ["constant", 0]
+# }
+# grid_params = {
+#     "L": 1,
+#     "n": 100
+# }
+# core_params = {
+#     "D":        1,
+#     "R":        1
+# }
+# source_params = {
+#     "function": "periodic",
+#     "alpha":    0,
+#     "beta":     1,
+#     "gamma":    20
+# }
 
 u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
 u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
 
-print(np.square(u_fem-u_exact).mean())
+print("MSE = {0:.2e}".format(np.square(u_fem-u_exact).mean()))
 
 fig = plt.figure()
 ax = fig.add_subplot()

@@ -5,9 +5,11 @@ import numpy as np
 import flexible_fem as fem
 
 pde = "laplace_1D"
+# neumann bc: set value of gradient of solution normal to boundary
+# dirichlet bc: set value of solution at boundary
 bc = {
-    "left": ["dirichlet", 2],
-    "right": ["neumann", -1]
+    "left": ["neumann", -1],
+    "right": ["dirichlet", 2]
 }
 bc_params = {
     "left": ["constant", 1],
@@ -29,7 +31,7 @@ u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, gr
 u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                           core_params, source_params)
 
-print(np.square(u_fem-u_exact).mean())
+print("MSE = {0:.2e}".format(np.square(u_fem-u_exact).mean()))
 
 fig = plt.figure()
 ax = fig.add_subplot()

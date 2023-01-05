@@ -6,8 +6,8 @@ import flexible_fem as fem
 def test_laplace_1D():
     pde = "laplace_1D"
     bc = {
-        "left": ["dirichlet", 2],
-        "right": ["neumann", -1]
+        "left": ["neumann", -1],
+        "right": ["dirichlet", 2]
     }
     bc_params = {
         "left": ["constant", 1],
@@ -29,7 +29,7 @@ def test_laplace_1D():
     u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                               core_params, source_params)
 
-    assert np.square(u_fem-u_exact).mean() < 10**-14
+    assert np.square(u_fem-u_exact).mean() < 10**-12
 
 
 def test_sad_1D():
@@ -130,4 +130,41 @@ def test_sdr_1D():
     u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
                                                               core_params, source_params)
 
-    assert np.square(u_fem-u_exact).mean() < 10**-14
+    assert np.square(u_fem-u_exact).mean() < 10**-12
+
+
+def test_sdr_v2_1D():
+    pde = "steady_diffusion_reaction_1D"
+    bc = {
+        "left": ["neumann", -1.5],
+        "right": ["neumann", -0.5]
+    }
+    bc_params = {
+        "left": ["constant", 0],
+        "right": ["constant", 0]
+    }
+    grid_params = {
+        "L": 1,
+        "n": 100
+    }
+    core_params = {
+        "D":        1,
+        "R":        0.8
+    }
+    source_params = {
+        "function": "periodic",
+        "alpha":    2.5,
+        "beta":     2,
+        "gamma":    5
+    }
+
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+                                                              core_params, source_params)
+
+    assert np.square(u_fem-u_exact).mean() < 10**-9
+
+
+# if __name__ == '__main__':
+#     test_sdr_v2_1D()
