@@ -62,7 +62,7 @@ class NumericalSolution:
 
         # We use standard (continuous) Galerkin, in which the test functions are equal to the
         # basis functions:
-        # v_i = phi_i
+        # v_i = phi_i = N_i
 
         dim = 1
 
