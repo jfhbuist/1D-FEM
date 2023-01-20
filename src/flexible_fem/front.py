@@ -239,7 +239,7 @@ class NumericalSolution:
         f = lambda x: 0
 
         # weak form:
-        # \int_0^L - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx  = 0
+        # \int_S - D*(n_x*u_x + n_y*u_y)*v + \int_V D*(u_x*v_x + u_y*v_y) dxdy  = 0
 
         dim = 2
 
