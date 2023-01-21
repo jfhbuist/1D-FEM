@@ -134,11 +134,11 @@ class Discretization:
         self.dim = dim
         # Isoparametric mapping: Use same shape functions for basis functions as for coordinate
         # transformation
-        self.shape_functions, self.dphidxieta = self.define_shape_functions()
-        self.shape_functions_bound, self.dphidxieta_bound = self.define_shape_functions(True)
+        self.basis_functions, self.dphidxieta = self.define_shape_functions()
+        self.basis_functions_bound, self.dphidxieta_bound = self.define_shape_functions(True)
         # Standard Galerkin: Use same shape functions for test functions as for basis functions
-        # self.test_functions, self.dvdxieta = self.define_shape_functions()
-        # self.test_functions_bound, self.dvdxieta_bound = self.define_shape_functions(True)
+        self.test_functions, self.dvdxieta = self.define_shape_functions()
+        self.test_functions_bound, self.dvdxieta_bound = self.define_shape_functions(True)
 
     # def generate_shape_functions(self, vert_coords, boundary=False):
     #     # Generate basis or test functions for current element (fill in vertex coordinates)
@@ -182,7 +182,7 @@ class Discretization:
         n0 = lambda xi: 1-xi
         n1 = lambda xi: xi
         shape_functions = [n0, n1]
-        dndxieta = np.array([-1, 1])
+        dndxieta = np.array([[-1], [1]])
         return shape_functions, dndxieta
 
     def define_shape_functions_triangle(self):
@@ -219,46 +219,46 @@ class Discretization:
         # Use coordinate transformation xi = (x - x0)/dx, dxi/dx = 1/dx, dx = dx dxi
         # This implies x = xi*dx + x0
         # So Jacobian = dx
-        jacobian = np.array([[np.matmul(self.dphidxieta, vert_coords)]])
+        jacobian = np.array([np.matmul(vert_coords, self.dphidxieta)])
         return jacobian
 
     def get_jacobian_triangle(self, vert_coords):
         # For triangle element, calculate jacobian dxy/dxieta
         # This is the 2x2 matrix [[dx/dxi, dy/dxi],[dx/deta, dy/deta]]
         # It can be calculated by multiplying the matrices dphi/dxieta and vert_coords
-        jacobian = np.matmul(self.dphidxieta, vert_coords)
+        jacobian = np.matmul(vert_coords, self.dphidxieta)
         return jacobian
 
-    def get_jacobian_inverse(self, vert_coords, boundary=False):
-        # Calculate inverse of jacobian dxy/dxieta
-        if boundary:
-            dim = self.dim - 1
-        else:
-            dim = self.dim
-        if dim == 0:
-            jacobian_inverse = 0
-        else:
-            # For line element, calculate jacobian inverse dxi/dx
-            # For triangle element, calculate jacobian inverse dxieta/dxy
-            # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
-            jacobian = self.get_jacobian(vert_coords)
-            jacobian_inverse = np.linalg.inv(jacobian)
-        return jacobian_inverse
+    # def get_jacobian_inverse(self, vert_coords, boundary=False):
+    #     # Calculate inverse of jacobian dxy/dxieta
+    #     if boundary:
+    #         dim = self.dim - 1
+    #     else:
+    #         dim = self.dim
+    #     if dim == 0:
+    #         jacobian_inverse = 0
+    #     else:
+    #         # For line element, calculate jacobian inverse dxi/dx
+    #         # For triangle element, calculate jacobian inverse dxieta/dxy
+    #         # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
+    #         jacobian = self.get_jacobian(vert_coords)
+    #         jacobian_inverse = np.linalg.inv(jacobian)
+    #     return jacobian_inverse
 
-    def get_jacobian_inverse_line(self, vert_coords):
-        # Calculate jacobian inverse dxi/dx
-        jacobian = self.get_jacobian_line(vert_coords)
-        jacobian_inverse = np.linalg.inv(jacobian)
-        return jacobian_inverse
+    # def get_jacobian_inverse_line(self, vert_coords):
+    #     # Calculate jacobian inverse dxi/dx
+    #     jacobian = self.get_jacobian_line(vert_coords)
+    #     jacobian_inverse = np.linalg.inv(jacobian)
+    #     return jacobian_inverse
 
-    def get_jacobian_inverse_triangle(self, vert_coords):
-        # Calculate jacobian inverse dxieta/dxy
-        # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
-        jacobian = self.get_jacobian_triangle(vert_coords)
-        # det = np.linalg.det(jac)
-        # jacobian_inverse = (1/det)*np.array([[jac[1, 1], -jac[0, 1]], [-jac[1, 0], jac[0, 0]]])
-        jacobian_inverse = np.linalg.inv(jacobian)
-        return jacobian_inverse
+    # def get_jacobian_inverse_triangle(self, vert_coords):
+    #     # Calculate jacobian inverse dxieta/dxy
+    #     # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
+    #     jacobian = self.get_jacobian_triangle(vert_coords)
+    #     # det = np.linalg.det(jac)
+    #     # jacobian_inverse = (1/det)*np.array([[jac[1, 1], -jac[0, 1]], [-jac[1, 0], jac[0, 0]]])
+    #     jacobian_inverse = np.linalg.inv(jacobian)
+    #     return jacobian_inverse
 
     def coordinate_transformation(self, vert_coords, function_xy, boundary=False):
         # Transform function of xy to function of xieta
@@ -279,7 +279,7 @@ class Discretization:
         # Use coordinate transformation xi = (x - x0)/dx, dxi/dx = 1/dx, dx = dx dxi
         # This implies x = xi*dx + x0
         # This can be written systematically as x = x0*phi0(xi) + x1*phi1(xi)
-        phi = self.shape_functions
+        phi = self.basis_functions
         x0 = vert_coords[0]
         x1 = vert_coords[1]
         function_xi = lambda xi: function_x(x0*phi[0](xi)+x1*phi[1](xi))
@@ -289,7 +289,7 @@ class Discretization:
         # Transform 2D function of xy to function of xieta
         # Use x = x0*phi0(xi, eta) + x1*phi1(xi, eta) + x2*phi2(xi, eta)
         # and y = y0*phi0(xi, eta) + y1*phi1(xi, eta) + y2*phi2(xi, eta)
-        phi = self.shape_functions
+        phi = self.basis_functions
         x0 = vert_coords[0, 0]
         y0 = vert_coords[0, 1]
         x1 = vert_coords[1, 0]
@@ -474,7 +474,7 @@ class SourceOperator:
         discretization = self.discretization
         vert_coords = np.array([grid.xy_vert[ev] for ev in elem_vertices])
         # get test functions
-        test_functions = discretization.shape_functions
+        test_functions = discretization.test_functions
         d_elem = np.zeros(len(test_functions))
         for j, test_function in enumerate(test_functions):  # loop over test functions
             integrand = self.generate_integrand(test_function, vert_coords)
@@ -552,13 +552,22 @@ class SolutionOperator():
         grid = self.grid
         discretization = self.discretization
         vert_coords = np.array([grid.xy_vert[ev] for ev in elem_vertices])
-        test_functions = discretization.shape_functions
-        basis_functions = discretization.shape_functions
+        test_functions = discretization.test_functions
+        basis_functions = discretization.basis_functions
+        jac = discretization.get_jacobian(vert_coords)  # dxydxieta
+        jac_inv = np.linalg.inv(jac)  # dxietadxy
+        det = np.linalg.det(jac)
+        dphidxieta = discretization.dphidxieta
+        dvdxieta = discretization.dvdxieta
+        dphidxy = np.matmul(dphidxieta, jac_inv)
+        dvdxy = np.matmul(dvdxieta, jac_inv)
         # calculate s_ij
         s_elem = np.zeros((len(test_functions), len(test_functions)))
         for j, test_function in enumerate(basis_functions):  # loop over test functions
+            dvjdxy = dvdxy[j]
             for k, basis_function in enumerate(basis_functions):  # loop over solution basis functions
-                integrand = self.generate_integrand(test_function, basis_function, vert_coords)
+                dphikdxy = dphidxy[k]
+                integrand = self.generate_integrand(test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords)
                 # integrate over element and put in element matrix
                 s_elem[j, k] = discretization.integrate_element(integrand)
         return s_elem
@@ -588,7 +597,7 @@ class NaturalBoundary():
         bc_type = bc[lb][0]
         bc_value = bc[lb][1]
         # get test functions
-        test_functions_bound = discretization.shape_functions_bound
+        test_functions_bound = discretization.test_functions_bound
         b_elem = np.zeros(len(test_functions_bound))
         for j, test_function in enumerate(test_functions_bound):  # loop over test functions
             integrand = self.generate_boundary_integrand(test_function, vert_coords, bc_type, bc_value)
@@ -627,14 +636,15 @@ class Diffusion(SolutionOperator, NaturalBoundary):
         self.s = self.assemble_stiffness_matrix()
         self.b_nat = self.assemble_natural_boundary_vector()
 
-    def generate_integrand(self, test_function, basis_function, vert_coords):
+    def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         # generate integrand for diffusion
-        discretization = self.discretization
-        jac = discretization.get_jacobian(vert_coords)
-        jac_inv = discretization.get_jacobian_inverse(vert_coords)
-        det = np.linalg.det(jac)
-        dphidxieta = discretization.dphidxieta
-        integrand = lambda xi: self.coeff*discretization.differentiate(vert_coords, test_function)(xi)*discretization.differentiate(vert_coords, basis_function)(xi)*det
+        # this is only one of the integrands, for one of the combinations of test and basis functions
+        discretization = self.discretization       
+        # a = self.coeff*discretization.differentiate(vert_coords, test_function)(0.5)*discretization.differentiate(vert_coords, basis_function)(0.5)*det
+        # print(a)
+        # b = self.coeff*(dvjdxy*dphikdxy).item()*det
+        # print(b)
+        integrand = lambda xi: self.coeff*(dvjdxy*dphikdxy).item()*det
         return integrand
 
     def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
@@ -661,13 +671,9 @@ class Reaction(SolutionOperator, NaturalBoundary):
         self.s = self.assemble_stiffness_matrix()
         self.b_nat = self.assemble_natural_boundary_vector()
 
-    def generate_integrand(self, test_function, basis_function, vert_coords):
+    def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         # generate integrand for reaction
         discretization = self.discretization
-        jac = discretization.get_jacobian(vert_coords)
-        jac_inv = discretization.get_jacobian_inverse(vert_coords)
-        det = np.linalg.det(jac)
-        dphidxieta = discretization.dphidxieta
         integrand = lambda xi: self.coeff*test_function(xi)*basis_function(xi)*det
         return integrand
 
@@ -689,14 +695,10 @@ class Advection(SolutionOperator, NaturalBoundary):
         self.s = self.assemble_stiffness_matrix()
         self.b_nat = self.assemble_natural_boundary_vector()
 
-    def generate_integrand(self, test_function, basis_function, vert_coords):
+    def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         # generate integrand for linear advection
         discretization = self.discretization
-        jac = discretization.get_jacobian(vert_coords)
-        jac_inv = discretization.get_jacobian_inverse(vert_coords)
-        det = np.linalg.det(jac)
-        dphidxieta = discretization.dphidxieta
-        integrand = lambda xi: self.coeff*discretization.differentiate(vert_coords, basis_function)(xi)*test_function(xi)*det
+        integrand = lambda xi: self.coeff*dphikdxy.item()*test_function(xi)*det
         return integrand
 
     def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
@@ -789,7 +791,7 @@ class Solution():
                 if discretization.check_if_point_in_element(vert_coords, sol_loc):
                     # coordinate is in this element
                     # get basis functions
-                    basis_functions_xieta = discretization.shape_functions
+                    basis_functions_xieta = discretization.basis_functions
                     basis_functions = [discretization.coordinate_transformation_inverse(vert_coords, bfx) for bfx in basis_functions_xieta]
                     # basis_functions = discretization.coordinate_transformation_inverse(vert_coords, basis_functions_xieta)
                     # loop over bounding vertices
