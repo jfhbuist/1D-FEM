@@ -11,23 +11,23 @@ from . import core
 
 
 class NumericalSolution:
-    def get_solution(self, pde, bc, bc_params, grid_params, core_params, source_params):
+    def get_solution(self, pde, bc_types, bc_params, grid_params, core_params, source_params):
         if pde == 'steady_diffusion_reaction_1D':
-            u, x = self.steady_diffusion_reaction_1D(bc, bc_params, grid_params,
+            u, x = self.steady_diffusion_reaction_1D(bc_types, bc_params, grid_params,
                                                      core_params, source_params)
         elif pde == 'steady_advection_diffusion_reaction_1D':
-            u, x = self.steady_advection_diffusion_reaction_1D(bc, bc_params, grid_params,
+            u, x = self.steady_advection_diffusion_reaction_1D(bc_types, bc_params, grid_params,
                                                                core_params, source_params)
         elif pde == 'steady_advection_diffusion_1D':
-            u, x = self.steady_advection_diffusion_1D(bc, bc_params, grid_params,
+            u, x = self.steady_advection_diffusion_1D(bc_types, bc_params, grid_params,
                                                       core_params, source_params)
         elif pde == 'laplace_1D':
-            u, x = self.laplace_1D(bc, bc_params, grid_params, core_params, source_params)
+            u, x = self.laplace_1D(bc_types, bc_params, grid_params, core_params, source_params)
         elif pde == 'laplace_2D':
-            u, x = self.laplace_2D(bc, bc_params, grid_params, core_params, source_params)
+            u, x = self.laplace_2D(bc_types, bc_params, grid_params, core_params, source_params)
         return u, x
 
-    def steady_diffusion_reaction_1D(self, bc, bc_params, grid_params, core_params, source_params):
+    def steady_diffusion_reaction_1D(self, bc_types, bc_params, grid_params, core_params, source_params):
         # Diffusion-reaction equation (aka Helmholtz equation):
         # -D*u_xx + R*u = f
         D = core_params["D"]
@@ -74,26 +74,26 @@ class NumericalSolution:
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(grid, discretization, bc, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
 
-        reaction = core.Reaction(grid, discretization, bc, R)
+        reaction = core.Reaction(grid, discretization, bc_types, bc_params, R)
 
         operators = [diffusion, reaction]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
 
-    def steady_advection_diffusion_reaction_1D(self, bc, bc_params, grid_params,
+    def steady_advection_diffusion_reaction_1D(self, bc_types, bc_params, grid_params,
                                                core_params, source_params):
         # Advection-diffusion-reaction equation
         # A*u_x - D*u_xx + R*u = f
@@ -124,28 +124,28 @@ class NumericalSolution:
         source = core.Source(grid, discretization, f)
         # print(source.d)
 
-        advection = core.Advection(grid, discretization, bc, A)
+        advection = core.Advection(grid, discretization, bc_types, bc_params, A)
 
-        diffusion = core.Diffusion(grid, discretization, bc, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
 
-        reaction = core.Reaction(grid, discretization, bc, R)
+        reaction = core.Reaction(grid, discretization, bc_types, bc_params, R)
 
         operators = [advection, diffusion, reaction]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
 
-    def steady_advection_diffusion_1D(self, bc, bc_params, grid_params,
+    def steady_advection_diffusion_1D(self, bc_types, bc_params, grid_params,
                                       core_params, source_params):
         # Advection-diffusion equation
         # A*u_x - D*u_xx = f
@@ -175,26 +175,26 @@ class NumericalSolution:
         source = core.Source(grid, discretization, f)
         # print(source.d)
 
-        advection = core.Advection(grid, discretization, bc, A)
+        advection = core.Advection(grid, discretization, bc_types, bc_params, A)
 
-        diffusion = core.Diffusion(grid, discretization, bc, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
 
         operators = [advection, diffusion]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
 
-    def laplace_1D(self, bc, bc_params, grid_params, core_params, source_params):
+    def laplace_1D(self, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # - D*u_xx = 0
         D = core_params["D"]
@@ -215,24 +215,24 @@ class NumericalSolution:
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(grid, discretization, bc, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
 
         operators = [diffusion]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
 
-    def laplace_2D(self, bc, bc_params, grid_params, core_params, source_params):
+    def laplace_2D(self, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # - D*(u_xx + u_yy) = 0
         D = core_params["D"]
@@ -255,13 +255,13 @@ class NumericalSolution:
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(grid, discretization, bc, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
 
         operators = [diffusion]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, nx)
@@ -269,7 +269,7 @@ class NumericalSolution:
         xy = [[x, y] for x, y in zip(x_vec, y_vec)]
         X, Y = np.meshgrid(x_vec, y_vec)
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, xy

@@ -7,13 +7,13 @@ import flexible_fem as fem
 # # Reference input:
 pde = "steady_diffusion_reaction_1D"
 # neumann bc: set value of gradient of solution normal to boundary
-bc = {
-    "left": ["neumann", -1.5],
-    "right": ["neumann", -0.5]
+bc_types = {
+    "left": "neumann",
+    "right": "neumann"
 }
 bc_params = {
-    "left": ["constant", 0],
-    "right": ["constant", 0]
+    "left": ["constant", -1.5],
+    "right": ["constant", -0.5]
 }
 grid_params = {
     "L": 1,
@@ -32,7 +32,7 @@ source_params = {
 
 # # set 12
 # pde = "steady_diffusion_reaction_1D"
-# bc = {
+# bc_types = {
 #     "left": ["neumann", 0],
 #     "right": ["neumann", 0]
 # }
@@ -57,7 +57,7 @@ source_params = {
 
 # # set 13
 # pde = "steady_diffusion_reaction_1D"
-# bc = {
+# bc_types = {
 #     "left": ["neumann", 0],
 #     "right": ["neumann", 0]
 # }
@@ -80,9 +80,9 @@ source_params = {
 #     "gamma":    20
 # }
 
-u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                           core_params, source_params)
-u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                           core_params, source_params)
 
 print("MSE = {0:.2e}".format(np.square(u_fem-u_exact).mean()))

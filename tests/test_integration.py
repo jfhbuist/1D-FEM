@@ -5,13 +5,13 @@ import flexible_fem as fem
 
 def test_laplace_1D():
     pde = "laplace_1D"
-    bc = {
-        "left": ["neumann", -1],
-        "right": ["dirichlet", 2]
+    bc_types = {
+        "left": "neumann",
+        "right": "dirichlet"
     }
     bc_params = {
-        "left": ["constant", 1],
-        "right": ["constant", 0]
+        "left": ["constant", -1],
+        "right": ["constant", 2]
         }
     grid_params = {
         "L": 1.7,
@@ -24,9 +24,9 @@ def test_laplace_1D():
         "function": "zero"
         }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-12
@@ -34,9 +34,9 @@ def test_laplace_1D():
 
 def test_sad_1D():
     pde = "steady_advection_diffusion_1D"
-    bc = {
-        "left": ["dirichlet", 0],
-        "right": ["dirichlet", 1]
+    bc_types = {
+        "left": "dirichlet",
+        "right": "dirichlet"
     }
     bc_params = {
         "left": ["constant", 0],
@@ -58,9 +58,9 @@ def test_sad_1D():
         "gamma":    20
     }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-4
@@ -68,9 +68,9 @@ def test_sad_1D():
 
 def test_sadr_1D():
     pde = "steady_advection_diffusion_reaction_1D"
-    bc = {
-        "left": ["dirichlet", 1],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "dirichlet",
+        "right": "neumann"
     }
     bc_params = {
         "left": ["constant", 1],
@@ -92,9 +92,9 @@ def test_sadr_1D():
         "gamma":    30
         }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-5
@@ -102,9 +102,9 @@ def test_sadr_1D():
 
 def test_sdr_1D():
     pde = "steady_diffusion_reaction_1D"
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
     bc_params = {
         "left": ["constant", 0],
@@ -125,9 +125,9 @@ def test_sdr_1D():
         "gamma":    20
     }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-12
@@ -135,13 +135,13 @@ def test_sdr_1D():
 
 def test_sdr_v2_1D():
     pde = "steady_diffusion_reaction_1D"
-    bc = {
-        "left": ["neumann", -1.5],
-        "right": ["neumann", -0.5]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
     bc_params = {
-        "left": ["constant", 0],
-        "right": ["constant", 0]
+        "left": ["constant", -1.5],
+        "right": ["constant", -0.5]
     }
     grid_params = {
         "L": 1,
@@ -158,9 +158,9 @@ def test_sdr_v2_1D():
         "gamma":    5
     }
 
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
 
     assert np.square(u_fem-u_exact).mean() < 10**-9
