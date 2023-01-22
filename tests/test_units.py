@@ -19,7 +19,7 @@ def test_source_1D():
     }
 
     # periodic source term:
-    f = lambda x: alpha + beta*np.sin(gamma*x)
+    f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
     dim = 1
 
@@ -189,7 +189,7 @@ def test_solution_1D():
     }
 
     # periodic source term:
-    f = lambda x: alpha + beta*np.sin(gamma*x)
+    f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
     dim = 1
 
@@ -210,9 +210,10 @@ def test_solution_1D():
     natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc, operators)
 
     # specify points at which to return function:
-    x = np.linspace(0, L, n)
+    x_vec = np.linspace(0, L, n)
+    xy = [[x] for x in x_vec]
 
-    solution = fem.core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+    solution = fem.core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
 
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
@@ -242,7 +243,7 @@ def test_solution_interpolation_1D():
     }
 
     # periodic source term:
-    f = lambda x: alpha + beta*np.sin(gamma*x)
+    f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
     dim = 1
 
@@ -263,12 +264,13 @@ def test_solution_interpolation_1D():
     natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc, operators)
 
     # specify points at which to return function:
-    x = np.linspace(0, L, int(np.floor(n/3)))
+    x_vec = np.linspace(0, L, int(np.floor(n/3)))
+    xy = [[x] for x in x_vec]
 
-    solution = fem.core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+    solution = fem.core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
 
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
 
 # if __name__ == '__main__':
-#     test_solution_1D()
+#     test_source_1D()

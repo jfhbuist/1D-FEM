@@ -41,7 +41,9 @@ class NumericalSolution:
 
         if source_function == "periodic":
             # periodic source term:
-            f = lambda x: alpha + beta*np.sin(gamma*x)
+            # xy is a list, with xy[0] = x
+            # this is done for generality, so that the code works for 1D and 2D
+            f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
         # weak form:
         # -[D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx + \int_0^L R*u*v dx = \int_0^L f*v dx
@@ -83,12 +85,13 @@ class NumericalSolution:
         natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
-        x = np.linspace(0, L, n)
+        x_vec = np.linspace(0, L, n)
+        xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
         u = solution.u
 
-        return u, x
+        return u, x_vec
 
     def steady_advection_diffusion_reaction_1D(self, bc, bc_params, grid_params,
                                                core_params, source_params):
@@ -106,7 +109,7 @@ class NumericalSolution:
 
         if source_function == "periodic":
             # periodic source term:
-            f = lambda x: alpha + beta*np.sin(gamma*x)
+            f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
         # weak form:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
@@ -134,12 +137,13 @@ class NumericalSolution:
         natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
-        x = np.linspace(0, L, n)
+        x_vec = np.linspace(0, L, n)
+        xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
         u = solution.u
 
-        return u, x
+        return u, x_vec
 
     def steady_advection_diffusion_1D(self, bc, bc_params, grid_params,
                                       core_params, source_params):
@@ -156,7 +160,7 @@ class NumericalSolution:
 
         if source_function == "periodic":
             # periodic source term:
-            f = lambda x: alpha + beta*np.sin(gamma*x)
+            f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
         # weak form:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
@@ -182,12 +186,13 @@ class NumericalSolution:
         natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
-        x = np.linspace(0, L, n)
+        x_vec = np.linspace(0, L, n)
+        xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
         u = solution.u
 
-        return u, x
+        return u, x_vec
 
     def laplace_1D(self, bc, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
@@ -197,7 +202,7 @@ class NumericalSolution:
         n = grid_params["n"]
 
         # zero source term:
-        f = lambda x: 0
+        f = lambda xy: 0
 
         # weak form:
         # - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx  = 0
@@ -219,12 +224,13 @@ class NumericalSolution:
         natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
-        x = np.linspace(0, L, n)
+        x_vec = np.linspace(0, L, n)
+        xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
         u = solution.u
 
-        return u, x
+        return u, x_vec
 
     def laplace_2D(self, bc, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
@@ -236,7 +242,7 @@ class NumericalSolution:
         ny = grid_params["ny"]
 
         # zero source term:
-        f = lambda x: 0
+        f = lambda xy: 0
 
         # weak form:
         # \int_S - D*(n_x*u_x + n_y*u_y)*v + \int_V D*(u_x*v_x + u_y*v_y) dxdy  = 0
@@ -258,11 +264,12 @@ class NumericalSolution:
         natural_boundary = core.NaturalBoundary(grid, discretization, bc, operators)
 
         # specify points at which to return function:
-        x = np.linspace(0, L, nx)
-        y = np.linspace(0, H, ny)
-        X, Y = np.meshgrid(x, y)
+        x_vec = np.linspace(0, L, nx)
+        y_vec = np.linspace(0, H, ny)
+        xy = [[x, y] for x, y in zip(x_vec, y_vec)]
+        X, Y = np.meshgrid(x_vec, y_vec)
 
-        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+        solution = core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, xy)
         u = solution.u
 
-        return u, x
+        return u, xy
