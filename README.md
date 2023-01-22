@@ -12,7 +12,7 @@ To use this package, first install it (in a virtual environment):
 pip install .
 ```
 
-Then, just run one of the examples:
+Next, run one of the examples:
 ```
 python examples/sdr_1D.py
 ```
