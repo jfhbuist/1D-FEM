@@ -18,25 +18,25 @@ def broadcast(fun):
 class ExactSolution:
     def get_solution(self, pde, bc_types, bc_params, grid_params, core_params, source_params):
         if pde == 'steady_diffusion_reaction_1D':
-            u_sym, x_sym = self.steady_diffusion_reaction_1D(bc_types, bc_params, grid_params,
+            dim = 1
+            u_sym, x_sym = self.steady_diffusion_reaction_1D(dim, bc_types, bc_params, grid_params,
                                                              core_params, source_params)
-            dim = 1
         elif pde == 'steady_advection_diffusion_reaction_1D':
-            u_sym, x_sym = self.steady_advection_diffusion_reaction_1D(bc_types, bc_params, grid_params,
+            dim = 1
+            u_sym, x_sym = self.steady_advection_diffusion_reaction_1D(dim, bc_types, bc_params, grid_params,
                                                                        core_params, source_params)
-            dim = 1
         elif pde == 'steady_advection_diffusion_1D':
-            u_sym, x_sym = self.steady_advection_diffusion_1D(bc_types, bc_params, grid_params,
+            dim = 1
+            u_sym, x_sym = self.steady_advection_diffusion_1D(dim, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-            dim = 1
         elif pde == 'laplace_1D':
-            u_sym, x_sym = self.laplace_1D(bc_types, bc_params, grid_params,
-                                           core_params, source_params)
             dim = 1
+            u_sym, x_sym = self.laplace_1D(dim, bc_types, bc_params, grid_params,
+                                           core_params, source_params)
         elif pde == 'laplace_2D':
-            u_sym, x_sym, y_sym = self.laplace_2D(bc_types, bc_params, grid_params,
-                                                  core_params, source_params)
             dim = 2
+            u_sym, x_sym, y_sym = self.laplace_2D(dim, bc_types, bc_params, grid_params,
+                                                  core_params, source_params)
         if dim == 1:
             L = grid_params["L"]
             n = grid_params["n"]
@@ -62,7 +62,7 @@ class ExactSolution:
             U = u_num(X, Y)
             return U, X, Y
 
-    def steady_diffusion_reaction_1D(self, bc_types, bc_params, grid_params, core_params, source_params):
+    def steady_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Diffusion-reaction equation (aka Helmholtz equation):
         # -D*u_xx + R*u = f
         D = core_params["D"]
@@ -99,7 +99,7 @@ class ExactSolution:
         u = uc + up  # this is a symbolic function
         return u, x
 
-    def steady_advection_diffusion_reaction_1D(self, bc_types, bc_params, grid_params,
+    def steady_advection_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params,
                                                core_params, source_params):
         # Advection-diffusion-reaction equation
         # A*u_x - D*u_xx + R*u = f
@@ -142,7 +142,7 @@ class ExactSolution:
         u = uc + up  # this is a symbolic function
         return u, x
 
-    def steady_advection_diffusion_1D(self, bc_types, bc_params, grid_params,
+    def steady_advection_diffusion_1D(self, dim, bc_types, bc_params, grid_params,
                                       core_params, source_params):
         # Advection-diffusion equation
         # A*u_x - D*u_xx = f
@@ -217,7 +217,7 @@ class ExactSolution:
         c1 = c[1]
         return c0, c1
 
-    def laplace_1D(self, bc_types, bc_params, grid_params, core_params, source_params):
+    def laplace_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # -D*u_xx = 0
         # D = core_params["D"]
@@ -267,7 +267,7 @@ class ExactSolution:
         u = uc
         return u, x
 
-    def laplace_2D(self, bc_types, bc_params, grid_params, core_params, source_params):
+    def laplace_2D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # -D*(u_xx + u_yy) = 0
         # D = core_params["D"]

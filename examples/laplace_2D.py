@@ -11,18 +11,18 @@ bc_types = {
     "bottom": "dirichlet",
     "top": "dirichlet",
 }
-# grid_params = {
-#     "L": 1,
-#     "H": 1,
-#     "nx": 4,
-#     "ny": 6
-# }
 grid_params = {
     "L": 1,
     "H": 1,
-    "nx": 40,
-    "ny": 60
+    "nx": 4,
+    "ny": 6
 }
+# grid_params = {
+#     "L": 1,
+#     "H": 1,
+#     "nx": 40,
+#     "ny": 60
+# }
 bc_params = {
     "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],
     "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],
@@ -36,14 +36,15 @@ source_params = {
     "function": "zero",
 }
 
-u_exact, x_exact, y_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
-                                                                   core_params, source_params)
-# u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
-#                                                           core_params, source_params)
+# u_exact, x_exact, y_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params,
+#                                                         grid_params, core_params, source_params)
+u_fem, x_fem, y_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params,
+                                                        grid_params, core_params, source_params)
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
-ax.plot_surface(x_exact, y_exact, u_exact)  # , label = 'exact')
+# ax.plot_surface(x_exact, y_exact, u_exact, label='exact')
+ax.plot_surface(x_fem, y_fem, u_fem, label='fem')
 
 L = grid_params["L"]
 H = grid_params["H"]

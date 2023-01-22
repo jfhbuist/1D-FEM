@@ -435,11 +435,26 @@ class Discretization:
 
     def check_if_point_in_element_line(self, vert_coords, point_coords):
         # Check if point with given coordinates is in the 1D element defined by vert_coords
-        func_xieta = lambda xieta: xieta[0]
-        func_xy = self.coordinate_transformation_inverse_line(vert_coords, func_xieta)
+        xi_xieta = lambda xieta: xieta[0]
+        xi_xy = self.coordinate_transformation_inverse_line(vert_coords, xi_xieta)
         xp = point_coords
-        xi = func_xy([xp])
-        if (xi >= 0) and (xi <= 1):
+        xip = xi_xy(xp)
+        if (xip >= 0) and (xip <= 1):
+            check = True
+        else:
+            check = False
+        return check
+
+    def check_if_point_in_element_triangle(self, vert_coords, point_coords):
+        # Check if point with given coordinates is in the 2D element defined by vert_coords
+        xi_xieta = lambda xieta: xieta[0]
+        eta_xieta = lambda xieta: xieta[1]
+        xi_xy = self.coordinate_transformation_inverse_triangle(vert_coords, xi_xieta)
+        eta_xy = self.coordinate_transformation_inverse_triangle(vert_coords, eta_xieta)
+        xyp = point_coords
+        xip = xi_xy(xyp)
+        etap = eta_xy(xyp)
+        if ((xip >= 0) and (xip <= 1)) and ((etap >= 0) and (etap <= 1)):
             check = True
         else:
             check = False
@@ -627,12 +642,12 @@ class NaturalBoundary():
             # xy_i is center of current boundary element
             belem_vertices = grid.belmat[i]
             lb = grid.loc_bound[i]
-            bt = self.generate_natural_boundary_term(belem_vertices, lb)
+            b_elem = self.generate_natural_boundary_term(belem_vertices, lb)
             # assign contributions from boundary element i to every connected vertex (only 1 in 1D)
             for j in range(len(belem_vertices)):
                 # each boundary vertex is associated with one test function (in 1D),
                 # which is associated with one equation
-                b[grid.belmat[i, j]] += bt
+                b[grid.belmat[i, j]] += b_elem[j]
                 # grid.belmat[i,j] is the index of the vertex/test function/equation
         return b
 

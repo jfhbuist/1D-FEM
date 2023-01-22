@@ -13,21 +13,29 @@ from . import core
 class NumericalSolution:
     def get_solution(self, pde, bc_types, bc_params, grid_params, core_params, source_params):
         if pde == 'steady_diffusion_reaction_1D':
-            u, x = self.steady_diffusion_reaction_1D(bc_types, bc_params, grid_params,
+            dim = 1
+            u, x = self.steady_diffusion_reaction_1D(dim, bc_types, bc_params, grid_params,
                                                      core_params, source_params)
         elif pde == 'steady_advection_diffusion_reaction_1D':
-            u, x = self.steady_advection_diffusion_reaction_1D(bc_types, bc_params, grid_params,
+            dim = 1
+            u, x = self.steady_advection_diffusion_reaction_1D(dim, bc_types, bc_params, grid_params,
                                                                core_params, source_params)
         elif pde == 'steady_advection_diffusion_1D':
-            u, x = self.steady_advection_diffusion_1D(bc_types, bc_params, grid_params,
+            dim = 1
+            u, x = self.steady_advection_diffusion_1D(dim, bc_types, bc_params, grid_params,
                                                       core_params, source_params)
         elif pde == 'laplace_1D':
-            u, x = self.laplace_1D(bc_types, bc_params, grid_params, core_params, source_params)
+            dim = 1
+            u, x = self.laplace_1D(dim, bc_types, bc_params, grid_params, core_params, source_params)
         elif pde == 'laplace_2D':
-            u, x = self.laplace_2D(bc_types, bc_params, grid_params, core_params, source_params)
-        return u, x
+            dim = 2
+            U, X, Y = self.laplace_2D(dim, bc_types, bc_params, grid_params, core_params, source_params)
+        if dim == 1:
+            return u, x
+        elif dim == 2:
+            return U, X, Y
 
-    def steady_diffusion_reaction_1D(self, bc_types, bc_params, grid_params, core_params, source_params):
+    def steady_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Diffusion-reaction equation (aka Helmholtz equation):
         # -D*u_xx + R*u = f
         D = core_params["D"]
@@ -66,8 +74,6 @@ class NumericalSolution:
         # basis functions:
         # v_i = phi_i = N_i
 
-        dim = 1
-
         grid = core.Grid(dim, L, n)
 
         discretization = core.Discretization(dim)
@@ -93,7 +99,7 @@ class NumericalSolution:
 
         return u, x_vec
 
-    def steady_advection_diffusion_reaction_1D(self, bc_types, bc_params, grid_params,
+    def steady_advection_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params,
                                                core_params, source_params):
         # Advection-diffusion-reaction equation
         # A*u_x - D*u_xx + R*u = f
@@ -114,8 +120,6 @@ class NumericalSolution:
         # weak form:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
         # + \int_0^L R*u*v dx = \int_0^L f*v dx
-
-        dim = 1
 
         grid = core.Grid(dim, L, n)
 
@@ -145,7 +149,7 @@ class NumericalSolution:
 
         return u, x_vec
 
-    def steady_advection_diffusion_1D(self, bc_types, bc_params, grid_params,
+    def steady_advection_diffusion_1D(self, dim, bc_types, bc_params, grid_params,
                                       core_params, source_params):
         # Advection-diffusion equation
         # A*u_x - D*u_xx = f
@@ -165,8 +169,6 @@ class NumericalSolution:
         # weak form:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
         # + \int_0^L R*u*v dx = \int_0^L f*v dx
-
-        dim = 1
 
         grid = core.Grid(dim, L, n)
 
@@ -194,7 +196,7 @@ class NumericalSolution:
 
         return u, x_vec
 
-    def laplace_1D(self, bc_types, bc_params, grid_params, core_params, source_params):
+    def laplace_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # - D*u_xx = 0
         D = core_params["D"]
@@ -206,8 +208,6 @@ class NumericalSolution:
 
         # weak form:
         # - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx  = 0
-
-        dim = 1
 
         grid = core.Grid(dim, L, n)
 
@@ -232,7 +232,7 @@ class NumericalSolution:
 
         return u, x_vec
 
-    def laplace_2D(self, bc_types, bc_params, grid_params, core_params, source_params):
+    def laplace_2D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # - D*(u_xx + u_yy) = 0
         D = core_params["D"]
@@ -246,8 +246,6 @@ class NumericalSolution:
 
         # weak form:
         # \int_S - D*(n_x*u_x + n_y*u_y)*v + \int_V D*(u_x*v_x + u_y*v_y) dxdy  = 0
-
-        dim = 2
 
         grid = core.Grid(dim, L, nx, H, ny)
 
@@ -266,10 +264,15 @@ class NumericalSolution:
         # specify points at which to return function:
         x_vec = np.linspace(0, L, nx)
         y_vec = np.linspace(0, H, ny)
-        xy = [[x, y] for x, y in zip(x_vec, y_vec)]
-        X, Y = np.meshgrid(x_vec, y_vec)
+        xy = [[x, y] for x in x_vec for y in y_vec]
+        # X, Y = np.meshgrid(x_vec, y_vec)
 
         solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
         u = solution.u
 
-        return u, xy
+        # Create meshgrid and get solution on meshgrid:
+        X = np.array([coord[0] for coord in xy]).reshape(x_vec.shape[0], y_vec.shape[0]).transpose()
+        Y = np.array([coord[1] for coord in xy]).reshape(x_vec.shape[0], y_vec.shape[0]).transpose()
+        U = np.array([sol for sol in u]).reshape(x_vec.shape[0], y_vec.shape[0]).transpose()
+
+        return U, X, Y
