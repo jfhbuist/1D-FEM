@@ -51,6 +51,11 @@ def test_diffusion_1D():
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -58,7 +63,7 @@ def test_diffusion_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_params, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
     operators = [diffusion]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
@@ -89,6 +94,10 @@ def test_reaction_1D():
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -96,7 +105,7 @@ def test_reaction_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_params, R)
+    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
     operators = [reaction]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
@@ -127,6 +136,10 @@ def test_advection_1D():
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -134,7 +147,7 @@ def test_advection_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    advection = fem.core.Advection(grid, discretization, bc_types, bc_params, A)
+    advection = fem.core.Advection(grid, discretization, bc_types, bc_functions, A)
 
     operators = [advection]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
@@ -161,6 +174,10 @@ def test_natural_boundary_1D():
         "left": ["constant", 2],
         "right": ["constant", -1]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -168,11 +185,11 @@ def test_natural_boundary_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_params, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
     operators = [diffusion]
 
-    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
     assert np.square(natural_boundary.b_nat-reference).max() < 10**-8
 
@@ -199,6 +216,10 @@ def test_solution_1D():
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     # periodic source term:
     f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
@@ -211,21 +232,21 @@ def test_solution_1D():
 
     source = fem.core.Source(grid, discretization, f)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_params, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
-    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_params, R)
+    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
     operators = [diffusion, reaction]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
     # print(stiffness.s)
 
-    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
     # specify points at which to return function:
     x_vec = np.linspace(0, L, n)
     xy = [[x] for x in x_vec]
 
-    solution = fem.core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+    solution = fem.core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
 
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
@@ -253,6 +274,10 @@ def test_solution_interpolation_1D():
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     # periodic source term:
     f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
@@ -265,24 +290,24 @@ def test_solution_interpolation_1D():
 
     source = fem.core.Source(grid, discretization, f)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_params, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
-    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_params, R)
+    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
     operators = [diffusion, reaction]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
     # print(stiffness.s)
 
-    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
     # specify points at which to return function:
     x_vec = np.linspace(0, L, int(np.floor(n/3)))
     xy = [[x] for x in x_vec]
 
-    solution = fem.core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+    solution = fem.core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
 
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
 
-# if __name__ == '__main__':
-#     test_source_1D()
+if __name__ == '__main__':
+    test_solution_1D()

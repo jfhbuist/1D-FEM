@@ -52,6 +52,11 @@ class NumericalSolution:
             # xy is a list, with xy[0] = x
             # this is done for generality, so that the code works for 1D and 2D
             f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
+            
+        bc_functions = {}
+        for lb in bc_params:
+            if bc_params[lb][0] == "constant":
+                bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
         # weak form:
         # -[D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx + \int_0^L R*u*v dx = \int_0^L f*v dx
@@ -80,21 +85,21 @@ class NumericalSolution:
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
-        reaction = core.Reaction(grid, discretization, bc_types, bc_params, R)
+        reaction = core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
         operators = [diffusion, reaction]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
@@ -116,6 +121,11 @@ class NumericalSolution:
         if source_function == "periodic":
             # periodic source term:
             f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
+            
+        bc_functions = {}
+        for lb in bc_params:
+            if bc_params[lb][0] == "constant":
+                bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
         # weak form:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
@@ -128,23 +138,23 @@ class NumericalSolution:
         source = core.Source(grid, discretization, f)
         # print(source.d)
 
-        advection = core.Advection(grid, discretization, bc_types, bc_params, A)
+        advection = core.Advection(grid, discretization, bc_types, bc_functions, A)
 
-        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
-        reaction = core.Reaction(grid, discretization, bc_types, bc_params, R)
+        reaction = core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
         operators = [advection, diffusion, reaction]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
@@ -165,6 +175,11 @@ class NumericalSolution:
         if source_function == "periodic":
             # periodic source term:
             f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
+            
+        bc_functions = {}
+        for lb in bc_params:
+            if bc_params[lb][0] == "constant":
+                bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
         # weak form:
         # \int_0^L A*(du/dx)*v dx - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
@@ -177,21 +192,21 @@ class NumericalSolution:
         source = core.Source(grid, discretization, f)
         # print(source.d)
 
-        advection = core.Advection(grid, discretization, bc_types, bc_params, A)
+        advection = core.Advection(grid, discretization, bc_types, bc_functions, A)
 
-        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
         operators = [advection, diffusion]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
@@ -205,6 +220,11 @@ class NumericalSolution:
 
         # zero source term:
         f = lambda xy: 0
+        
+        bc_functions = {}
+        for lb in bc_params:
+            if bc_params[lb][0] == "constant":
+                bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
         # weak form:
         # - [D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx  = 0
@@ -215,19 +235,19 @@ class NumericalSolution:
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
         operators = [diffusion]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, n)
         xy = [[x] for x in x_vec]
 
-        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         return u, x_vec
@@ -244,8 +264,15 @@ class NumericalSolution:
         # zero source term:
         f = lambda xy: 0
 
-        # weak form:
-        # \int_S - D*(n_x*u_x + n_y*u_y)*v + \int_V D*(u_x*v_x + u_y*v_y) dxdy  = 0
+        bc_functions = {}
+        for lb in bc_params:
+            if bc_params[lb][0] == "constant":
+                bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
+            elif bc_params[lb][0] == "sine":
+                if lb == "left" or lb == "right":
+                    bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1] + bc_params[lb][2]*np.sin(bc_params[lb][3]*xy[1])
+                elif lb == "bottom" or lb == "top":
+                    bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1] + bc_params[lb][2]*np.sin(bc_params[lb][3]*xy[0])
 
         grid = core.Grid(dim, L, nx, H, ny)
 
@@ -253,13 +280,13 @@ class NumericalSolution:
 
         source = core.Source(grid, discretization, f)
 
-        diffusion = core.Diffusion(grid, discretization, bc_types, bc_params, D)
+        diffusion = core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
         operators = [diffusion]
         stiffness = core.SolutionOperator(grid, discretization, operators)
         # print(stiffness.s)
 
-        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_params, operators)
+        natural_boundary = core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
         # specify points at which to return function:
         x_vec = np.linspace(0, L, nx)
@@ -267,7 +294,7 @@ class NumericalSolution:
         xy = [[x, y] for x in x_vec for y in y_vec]
         # X, Y = np.meshgrid(x_vec, y_vec)
 
-        solution = core.Solution(grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, xy)
+        solution = core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
         u = solution.u
 
         # Create meshgrid and get solution on meshgrid:

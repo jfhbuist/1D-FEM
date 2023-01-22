@@ -600,11 +600,11 @@ class SolutionOperator():
 
 
 class NaturalBoundary():
-    def __init__(self, grid, discretization, bc_types, bc_params, operators):
+    def __init__(self, grid, discretization, bc_types, bc_functions, operators):
         self.grid = grid
         self.discretization = discretization
         self.bc_types = bc_types
-        self.bc_params = bc_params
+        self.bc_functions = bc_functions
         self.b_nat = self.combine_operators(operators)
 
     def combine_operators(self, operators):
@@ -619,16 +619,18 @@ class NaturalBoundary():
         grid = self.grid
         discretization = self.discretization
         bc_types = self.bc_types
-        bc_params = self.bc_params
+        bc_functions = self.bc_functions
         vert_coords = np.array([grid.xy_vert[ev] for ev in belem_vertices])
         # get bc
         bc_type = bc_types[lb]
-        bc_value = bc_params[lb][1]
+        bc_function = bc_functions[lb]
+        # transform bc_function to function of xieta
+        bc_function_xieta = discretization.coordinate_transformation(vert_coords, bc_function, boundary=True)
         # get test functions
         test_functions_bound = discretization.test_functions_bound
         b_elem = np.zeros(len(test_functions_bound))
         for j, test_function in enumerate(test_functions_bound):  # loop over test functions
-            integrand = self.generate_boundary_integrand(test_function, vert_coords, bc_type, bc_value)
+            integrand = self.generate_boundary_integrand(test_function, vert_coords, bc_type, bc_function_xieta)
             # integrate over element and put in element vector
             b_elem[j] = discretization.integrate_element(integrand, True)
         return b_elem
@@ -656,11 +658,11 @@ class Diffusion(SolutionOperator, NaturalBoundary):
     # -D*u_xx
     # weak form:
     # -[D*(du/dx)*v]_0^L + \int_0^L D*(du/dx)*(dv/dx) dx
-    def __init__(self, grid, discretization, bc_types, bc_params, D):
+    def __init__(self, grid, discretization, bc_types, bc_functions, D):
         self.grid = grid
         self.discretization = discretization
         self.bc_types = bc_types
-        self.bc_params = bc_params
+        self.bc_functions = bc_functions
         self.coeff = D
         self.s = self.assemble_stiffness_matrix()
         self.b_nat = self.assemble_natural_boundary_vector()
@@ -676,13 +678,13 @@ class Diffusion(SolutionOperator, NaturalBoundary):
         integrand = lambda xieta: self.coeff*(np.dot(dvjdxy, dphikdxy)).item()*det
         return integrand
 
-    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
+    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_function):
         # since we reduce the order of the diffusion operator through integration by parts, boundary terms appear, which must be added to the equation
         # since this term will be added to right-hand side, it gets a minus sign
         # discretization = self.discretization
         if bc_type == "neumann":
             # in 1D case there is nothing to integrate, test function at boundary is just 1
-            integrand = lambda xieta: self.coeff*bc_value*test_function(xieta)
+            integrand = lambda xieta: self.coeff*bc_function(xieta)*test_function(xieta)
         else:
             integrand = lambda xieta: 0
         return integrand
@@ -692,11 +694,11 @@ class Reaction(SolutionOperator, NaturalBoundary):
     # R*u
     # weak form:
     # \int_0^L R*u*v dx
-    def __init__(self, grid, discretization, bc_types, bc_params, R):
+    def __init__(self, grid, discretization, bc_types, bc_functions, R):
         self.grid = grid
         self.discretization = discretization
         self.bc_types = bc_types
-        self.bc_params = bc_params
+        self.bc_functions = bc_functions
         self.coeff = R
         self.s = self.assemble_stiffness_matrix()
         self.b_nat = self.assemble_natural_boundary_vector()
@@ -707,7 +709,7 @@ class Reaction(SolutionOperator, NaturalBoundary):
         integrand = lambda xieta: self.coeff*test_function(xieta)*basis_function(xieta)*det
         return integrand
 
-    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
+    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_function):
         # the boundary terms are zero for the reaction operator, since there is no integration by parts
         integrand = lambda xieta: 0
         return integrand
@@ -717,11 +719,11 @@ class Advection(SolutionOperator, NaturalBoundary):
     # A*u_x
     # weak form:
     # \int_0^L A*(du/dx)*v dx
-    def __init__(self, grid, discretization, bc_types, bc_params, A):
+    def __init__(self, grid, discretization, bc_types, bc_functions, A):
         self.grid = grid
         self.discretization = discretization
         self.bc_types = bc_types
-        self.bc_params = bc_params
+        self.bc_functions = bc_functions
         self.coeff = A
         self.s = self.assemble_stiffness_matrix()
         self.b_nat = self.assemble_natural_boundary_vector()
@@ -732,25 +734,25 @@ class Advection(SolutionOperator, NaturalBoundary):
         integrand = lambda xieta: self.coeff*dphikdxy.item()*test_function(xieta)*det
         return integrand
 
-    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_value):
+    def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_function):
         # the boundary terms are zero for the advection operator, since there is no integration by parts
         integrand = lambda xieta: 0
         return integrand
 
 
 class Solution():
-    def __init__(self, grid, discretization, bc_types, bc_params, stiffness, source, natural_boundary, x):
+    def __init__(self, grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, x):
         self.grid = grid
         self.discretization = discretization
         self.bc_types = bc_types
-        self.bc_params = bc_params
+        self.bc_functions = bc_functions
         self.u = self.calculate_solution(stiffness, source, natural_boundary, x)
 
     def calculate_solution(self, stiffness, source, natural_boundary, x):
         grid = self.grid
         discretization = self.discretization
         bc_types = self.bc_types
-        bc_params = self.bc_params
+        bc_functions = self.bc_functions
         s = stiffness.s
         d = source.d
         b_nat = natural_boundary.b_nat
@@ -772,11 +774,19 @@ class Solution():
         for idx0, xb in enumerate(grid.xy_bound):  # loop over boundary elements
             lb = grid.loc_bound[idx0]
             bc_type = bc_types[lb]
-            bc_value = bc_params[lb][1]
+            bc_function = bc_functions[lb]
             for idx1 in grid.belmat[idx0]:  # loop over vertices connected to boundary element
-                # xv = grid.xy_vert[idx1]  # position of vertex
+                xv = grid.xy_vert[idx1]  # position of vertex
                 if bc_type == "dirichlet":
                     # set value for this boundary node
+                    bc_value = bc_function(xv)
+                    # if bc_functions[lb][0] == "constant":
+                    #     bc_value = bc_functions[lb][1]
+                    # elif bc_functions[lb][0] == "sine":
+                    #     if lb == "left" or lb == "right":
+                    #         bc_value = bc_functions[lb][1] + bc_functions[lb][2]*np.sin(bc_functions[lb][3]*xv[1])
+                    #     elif lb == "bottom" or lb == "top":
+                    #         bc_value = bc_functions[lb][1] + bc_functions[lb][2]*np.sin(bc_functions[lb][3]*xv[0])
                     g[idx1] = bc_value
 
         # right-hand side contains contributions from source, natural boundary conditions, and dirichlet boundary conditions
