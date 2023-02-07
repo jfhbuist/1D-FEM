@@ -17,12 +17,12 @@ grid_params = {
     "nx": 4,
     "ny": 6
 }
-grid_params = {
-    "L": 1,
-    "H": 1,
-    "nx": 20,
-    "ny": 30
-}
+# grid_params = {
+#     "L": 1,
+#     "H": 1,
+#     "nx": 20,
+#     "ny": 30
+# }
 bc_params = {
     "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
     "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)

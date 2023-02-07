@@ -373,8 +373,10 @@ class Discretization:
 
     def integrate_element_triangle(self, integrand):
         # Integrate 2D function of xieta over element
-        integrand_expanded = lambda xi, eta: integrand([xi, eta])
-        result = sp.integrate.dblquad(integrand_expanded, 0, 1, 0, 1)[0]
+        integrand_expanded = lambda eta, xi: integrand([xi, eta])
+        eta_lower_bound = 0
+        eta_upper_bound = lambda xi: 1 - xi
+        result = sp.integrate.dblquad(integrand_expanded, 0, 1, eta_lower_bound, eta_upper_bound)[0]
         return result
 
     def differentiate(self, vert_coords, function):
