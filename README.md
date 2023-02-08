@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/jfhbuist/flexible-fem/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/jfhbuist/flexible-fem/actions)
+[![Build Status](https://github.com/jfhbuist/flexible-fem/actions/workflows/CI.yml/badge.svg?event=push)](https://github.com/jfhbuist/flexible-fem/actions)
 [![codecov](https://codecov.io/gh/jfhbuist/flexible-fem/branch/main/graph/badge.svg?token=BFUOZDUQ6G)](https://codecov.io/gh/jfhbuist/flexible-fem)
 
 # flexible-fem
