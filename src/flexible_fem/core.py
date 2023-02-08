@@ -23,14 +23,6 @@ Continuous Galerkin: Test functions equal to basis functions
 """
 
 
-# def reduce_lambda(func, args):
-#     # this function takes a lambda function of multiple variables, and returns
-#     # a lambda function of a single variable
-#     # args can contain an arbitrary number of arguments
-#     # asterisk unpacks tuple
-#     return lambda x: func(x, *args)
-
-
 class Grid:
     def __init__(self, dim, L, nx, H=None, ny=None):
         self.dim = dim
@@ -140,16 +132,6 @@ class Discretization:
         self.test_functions, self.dvdxieta = self.define_shape_functions()
         self.test_functions_bound, self.dvdxieta_bound = self.define_shape_functions(True)
 
-    # def generate_shape_functions(self, vert_coords, boundary=False):
-    #     # Generate basis or test functions for current element (fill in vertex coordinates)
-    #     vert_coords_flat = tuple(np.array(vert_coords).reshape(-1))
-    #     general_shape_functions = self.define_shape_functions(boundary)
-    #     local_shape_functions = list()
-    #     for idx, general_shape_function in enumerate(general_shape_functions):
-    #         local_shape_functions.append(reduce_lambda(general_shape_function, vert_coords_flat))
-    #         # reduce_lambda necessary to eliminate elusive bug, where local basis function set in certain iteration, would change in subsequent iteration
-    #     return local_shape_functions
-
     def define_shape_functions(self, boundary=False):
         if boundary:
             dim = self.dim - 1
@@ -232,37 +214,6 @@ class Discretization:
         jacobian = np.matmul(np.transpose(vert_coords), self.dphidxieta)
         # jacobian = np.matmul(vert_coords, self.dphidxieta)
         return jacobian
-
-    # def get_jacobian_inverse(self, vert_coords, boundary=False):
-    #     # Calculate inverse of jacobian dxy/dxieta
-    #     if boundary:
-    #         dim = self.dim - 1
-    #     else:
-    #         dim = self.dim
-    #     if dim == 0:
-    #         jacobian_inverse = 0
-    #     else:
-    #         # For line element, calculate jacobian inverse dxi/dx
-    #         # For triangle element, calculate jacobian inverse dxieta/dxy
-    #         # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
-    #         jacobian = self.get_jacobian(vert_coords)
-    #         jacobian_inverse = np.linalg.inv(jacobian)
-    #     return jacobian_inverse
-
-    # def get_jacobian_inverse_line(self, vert_coords):
-    #     # Calculate jacobian inverse dxi/dx
-    #     jacobian = self.get_jacobian_line(vert_coords)
-    #     jacobian_inverse = np.linalg.inv(jacobian)
-    #     return jacobian_inverse
-
-    # def get_jacobian_inverse_triangle(self, vert_coords):
-    #     # Calculate jacobian inverse dxieta/dxy
-    #     # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
-    #     jacobian = self.get_jacobian_triangle(vert_coords)
-    #     # det = np.linalg.det(jac)
-    #     # jacobian_inverse = (1/det)*np.array([[jac[1, 1], -jac[0, 1]], [-jac[1, 0], jac[0, 0]]])
-    #     jacobian_inverse = np.linalg.inv(jacobian)
-    #     return jacobian_inverse
 
     def coordinate_transformation(self, vert_coords, function_xy, boundary=False):
         # Transform function of xy to function of xieta
@@ -378,54 +329,6 @@ class Discretization:
         eta_upper_bound = lambda xi: 1 - xi
         result = sp.integrate.dblquad(integrand_expanded, 0, 1, eta_lower_bound, eta_upper_bound)[0]
         return result
-
-    def differentiate(self, vert_coords, function):
-        # Differentiate function of xieta to xy within element
-        if self.dim == 1:
-            result = self.differentiate_1D(vert_coords, function)
-        elif self.dim == 2:
-            result = self.differentiate_2D(vert_coords, function)
-        return result
-
-    def differentiate_1D(self, vert_coords, function):
-        # Differentiate 1D function of xi to x within element
-        # Expand list argument to get direct function of variables
-        function_expanded = lambda xi: function([xi])
-        x0 = vert_coords[0]
-        x1 = vert_coords[1]
-        dx_i = abs(x1 - x0)
-        # calculate numerical derivative of function using central differences
-        result_expanded = lambda xi: sp.misc.derivative(function_expanded, xi, 1e-6)*(1/dx_i)
-        # multiply ddxi by (1/dx) to get ddx (as function of xi)
-        # Compact arguments to get function of list of variables
-        result = lambda xieta: result_expanded([xieta[0]])
-        return result
-
-    def calculate_element_size(self, vert_coords):
-        # Calculate the size of an element
-        if self.dim == 1:
-            size = self.calculate_element_size_1D(vert_coords)
-        elif self.dim == 2:
-            size = self.calculate_element_size_2D(vert_coords)
-        return size
-
-    def calculate_element_size_1D(self, vert_coords):
-        # Calculate length of element
-        x0 = vert_coords[0]
-        x1 = vert_coords[1]
-        dx_i = abs(x1 - x0)
-        return dx_i
-
-    def calculate_element_size_2D(self, vert_coords):
-        # Calculate area of element
-        x0 = vert_coords[0, 0]
-        y0 = vert_coords[0, 1]
-        x1 = vert_coords[1, 0]
-        y1 = vert_coords[1, 1]
-        x2 = vert_coords[2, 0]
-        y2 = vert_coords[2, 1]
-        area = ((x0-x1)*(y1-y2)+(y0-y1)*(x2-x1))/2
-        return area
 
     def check_if_point_in_element(self, vert_coords, point_coords):
         # Check if point with given coordinates is in the element defined by vert_coords
@@ -672,11 +575,6 @@ class Diffusion(SolutionOperator, NaturalBoundary):
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         # generate integrand for diffusion
         # this is only one of the integrands, for one of the combinations of test and basis functions
-        # discretization = self.discretization
-        # a = self.coeff*discretization.differentiate(vert_coords, test_function)(0.5)*discretization.differentiate(vert_coords, basis_function)(0.5)*det
-        # print(a)
-        # b = self.coeff*(dvjdxy*dphikdxy).item()*det
-        # print(b)
         integrand = lambda xieta: self.coeff*(np.dot(dvjdxy, dphikdxy)).item()*det
         return integrand
 
@@ -707,7 +605,6 @@ class Reaction(SolutionOperator, NaturalBoundary):
 
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         # generate integrand for reaction
-        discretization = self.discretization
         integrand = lambda xieta: self.coeff*test_function(xieta)*basis_function(xieta)*det
         return integrand
 
@@ -732,7 +629,6 @@ class Advection(SolutionOperator, NaturalBoundary):
 
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         # generate integrand for linear advection
-        discretization = self.discretization
         integrand = lambda xieta: self.coeff*dphikdxy.item()*test_function(xieta)*det
         return integrand
 
@@ -782,13 +678,6 @@ class Solution():
                 if bc_type == "dirichlet":
                     # set value for this boundary node
                     bc_value = bc_function(xv)
-                    # if bc_functions[lb][0] == "constant":
-                    #     bc_value = bc_functions[lb][1]
-                    # elif bc_functions[lb][0] == "sine":
-                    #     if lb == "left" or lb == "right":
-                    #         bc_value = bc_functions[lb][1] + bc_functions[lb][2]*np.sin(bc_functions[lb][3]*xv[1])
-                    #     elif lb == "bottom" or lb == "top":
-                    #         bc_value = bc_functions[lb][1] + bc_functions[lb][2]*np.sin(bc_functions[lb][3]*xv[0])
                     g[idx1] = bc_value
 
         # right-hand side contains contributions from source, natural boundary conditions, and dirichlet boundary conditions
@@ -811,7 +700,6 @@ class Solution():
                     # this is possible because we have moved these terms to the right hand side by subtracting np.matmul(s,g) (aka forward substitution)
                     s[:, idx1] = 0
                     s[idx1, idx1] = 1
-
                     # eliminate row in rhs
                     # this changes the equations for the boundary vertices into 1*boundary_vertex = bc
                     h[idx1] = g[idx1]
