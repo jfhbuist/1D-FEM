@@ -3,7 +3,7 @@
 
 # flexible-fem
 
-This is a one-dimensional standard Galerkin finite element code.
+This is a one- or two-dimensional standard Galerkin finite element code.
 It can solve steady state scalar equations, including advection, diffusion, and reaction operators, along with source terms.
 Implemented boundary conditions include inhomogeneous Dirichlet and inhomogeneous Neumann boundary conditions. 
 
@@ -14,7 +14,7 @@ pip install .
 
 Next, run one of the examples:
 ```
-python examples/sdr_1D.py
+python examples/laplace_2D.py
 ```
 
 These examples can be modified to use different parameters and boundary conditions.
