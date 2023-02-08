@@ -6,18 +6,13 @@ on:
       - master
       - main
   pull_request:
-    branches: 
-      - master
-      - main
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10"]
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
