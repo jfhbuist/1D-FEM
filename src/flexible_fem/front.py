@@ -291,7 +291,7 @@ class NumericalSolution:
         # specify points at which to return function:
         x_vec = np.linspace(0, L, nx)
         y_vec = np.linspace(0, H, ny)
-        xy = [[x, y] for x in x_vec for y in y_vec]
+        xy = np.array([[x, y] for x in x_vec for y in y_vec])
         # X, Y = np.meshgrid(x_vec, y_vec)
 
         solution = core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)

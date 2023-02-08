@@ -456,7 +456,7 @@ class Discretization:
         xyp = point_coords
         xip = xi_xy(xyp)
         etap = eta_xy(xyp)
-        if ((xip >= 0) and (xip <= 1)) and ((etap >= 0) and (etap <= 1)):
+        if (((xip >= 0) and (etap >= 0)) and (xip + etap <= 1)):
             check = True
         else:
             check = False
@@ -743,14 +743,14 @@ class Advection(SolutionOperator, NaturalBoundary):
 
 
 class Solution():
-    def __init__(self, grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, x):
+    def __init__(self, grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy):
         self.grid = grid
         self.discretization = discretization
         self.bc_types = bc_types
         self.bc_functions = bc_functions
-        self.u = self.calculate_solution(stiffness, source, natural_boundary, x)
+        self.u = self.calculate_solution(stiffness, source, natural_boundary, xy)
 
-    def calculate_solution(self, stiffness, source, natural_boundary, x):
+    def calculate_solution(self, stiffness, source, natural_boundary, xy):
         grid = self.grid
         discretization = self.discretization
         bc_types = self.bc_types
@@ -821,7 +821,7 @@ class Solution():
         # functions centered at each grid point
         c = np.linalg.solve(s, h)
         # construct solution at arbitrary locations x, using basis functions
-        u = self.construct_solution(grid, discretization, c, x)
+        u = self.construct_solution(grid, discretization, c, xy)
         return u
 
     def construct_solution(self, grid, discretization, c, sol_locs):
