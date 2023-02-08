@@ -13,13 +13,9 @@ def test_source_1D():
     alpha = 0.5
     beta = 2
     gamma = 30
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
-    }
 
     # periodic source term:
-    f = lambda x: alpha + beta*np.sin(gamma*x)
+    f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
     dim = 1
 
@@ -47,10 +43,19 @@ def test_diffusion_1D():
     D = 1.3
     L = 1
     n = 5
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
+    bc_params = {
+        "left": ["constant", 0],
+        "right": ["constant", 0]
+    }
+    
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -58,7 +63,7 @@ def test_diffusion_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
     operators = [diffusion]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
@@ -81,10 +86,18 @@ def test_reaction_1D():
     R = 0.8
     L = 1
     n = 5
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
+    bc_params = {
+        "left": ["constant", 0],
+        "right": ["constant", 0]
+    }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -92,7 +105,7 @@ def test_reaction_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    reaction = fem.core.Reaction(grid, discretization, bc, R)
+    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
     operators = [reaction]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
@@ -115,10 +128,18 @@ def test_advection_1D():
     A = 0.9
     L = 1
     n = 5
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
+    bc_params = {
+        "left": ["constant", 0],
+        "right": ["constant", 0]
+    }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -126,7 +147,7 @@ def test_advection_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    advection = fem.core.Advection(grid, discretization, bc, A)
+    advection = fem.core.Advection(grid, discretization, bc_types, bc_functions, A)
 
     operators = [advection]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
@@ -145,10 +166,18 @@ def test_natural_boundary_1D():
     D = 1.5
     L = 1.7
     n = 7
-    bc = {
-        "left": ["dirichlet", 2],
-        "right": ["neumann", -1]
+    bc_types = {
+        "left": "dirichlet",
+        "right": "neumann"
     }
+    bc_params = {
+        "left": ["constant", 2],
+        "right": ["constant", -1]
+    }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     dim = 1
 
@@ -156,11 +185,11 @@ def test_natural_boundary_1D():
 
     discretization = fem.core.Discretization(dim)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
     operators = [diffusion]
 
-    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc, operators)
+    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
     assert np.square(natural_boundary.b_nat-reference).max() < 10**-8
 
@@ -179,17 +208,21 @@ def test_solution_1D():
     alpha = 0.5
     beta = 2
     gamma = 30
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
     bc_params = {
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     # periodic source term:
-    f = lambda x: alpha + beta*np.sin(gamma*x)
+    f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
     dim = 1
 
@@ -199,20 +232,21 @@ def test_solution_1D():
 
     source = fem.core.Source(grid, discretization, f)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
-    reaction = fem.core.Reaction(grid, discretization, bc, R)
+    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
     operators = [diffusion, reaction]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
     # print(stiffness.s)
 
-    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc, operators)
+    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
     # specify points at which to return function:
-    x = np.linspace(0, L, n)
+    x_vec = np.linspace(0, L, n)
+    xy = [[x] for x in x_vec]
 
-    solution = fem.core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+    solution = fem.core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
 
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
@@ -232,17 +266,21 @@ def test_solution_interpolation_1D():
     alpha = 0.5
     beta = 2
     gamma = 30
-    bc = {
-        "left": ["neumann", 0],
-        "right": ["neumann", 0]
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
     }
     bc_params = {
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
+    bc_functions = {}
+    for lb in bc_params:
+        if bc_params[lb][0] == "constant":
+            bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
 
     # periodic source term:
-    f = lambda x: alpha + beta*np.sin(gamma*x)
+    f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
 
     dim = 1
 
@@ -252,23 +290,24 @@ def test_solution_interpolation_1D():
 
     source = fem.core.Source(grid, discretization, f)
 
-    diffusion = fem.core.Diffusion(grid, discretization, bc, D)
+    diffusion = fem.core.Diffusion(grid, discretization, bc_types, bc_functions, D)
 
-    reaction = fem.core.Reaction(grid, discretization, bc, R)
+    reaction = fem.core.Reaction(grid, discretization, bc_types, bc_functions, R)
 
     operators = [diffusion, reaction]
     stiffness = fem.core.SolutionOperator(grid, discretization, operators)
     # print(stiffness.s)
 
-    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc, operators)
+    natural_boundary = fem.core.NaturalBoundary(grid, discretization, bc_types, bc_functions, operators)
 
     # specify points at which to return function:
-    x = np.linspace(0, L, int(np.floor(n/3)))
+    x_vec = np.linspace(0, L, int(np.floor(n/3)))
+    xy = [[x] for x in x_vec]
 
-    solution = fem.core.Solution(grid, discretization, bc, stiffness, source, natural_boundary, x)
+    solution = fem.core.Solution(grid, discretization, bc_types, bc_functions, stiffness, source, natural_boundary, xy)
 
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
 
-# if __name__ == '__main__':
-#     test_solution_1D()
+if __name__ == '__main__':
+    test_solution_1D()

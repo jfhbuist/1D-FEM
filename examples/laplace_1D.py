@@ -7,13 +7,13 @@ import flexible_fem as fem
 pde = "laplace_1D"
 # neumann bc: set value of gradient of solution normal to boundary
 # dirichlet bc: set value of solution at boundary
-bc = {
-    "left": ["neumann", -1],
-    "right": ["dirichlet", 2]
+bc_types = {
+    "left": "neumann",
+    "right": "dirichlet"
 }
 bc_params = {
-    "left": ["constant", 1],
-    "right": ["constant", 0]
+    "left": ["constant", -1],
+    "right": ["constant", 2]
     }
 grid_params = {
     "L": 1.7,
@@ -26,9 +26,9 @@ source_params = {
     "function": "zero"
     }
 
-u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc, bc_params, grid_params,
+u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                           core_params, source_params)
-u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc, bc_params, grid_params,
+u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                           core_params, source_params)
 
 print("MSE = {0:.2e}".format(np.square(u_fem-u_exact).mean()))

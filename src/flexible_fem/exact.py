@@ -16,27 +16,27 @@ def broadcast(fun):
 
 
 class ExactSolution:
-    def get_solution(self, pde, bc, bc_params, grid_params, core_params, source_params):
+    def get_solution(self, pde, bc_types, bc_params, grid_params, core_params, source_params):
         if pde == 'steady_diffusion_reaction_1D':
-            u_sym, x_sym = self.steady_diffusion_reaction_1D(bc, bc_params, grid_params,
+            dim = 1
+            u_sym, x_sym = self.steady_diffusion_reaction_1D(dim, bc_types, bc_params, grid_params,
                                                              core_params, source_params)
-            dim = 1
         elif pde == 'steady_advection_diffusion_reaction_1D':
-            u_sym, x_sym = self.steady_advection_diffusion_reaction_1D(bc, bc_params, grid_params,
+            dim = 1
+            u_sym, x_sym = self.steady_advection_diffusion_reaction_1D(dim, bc_types, bc_params, grid_params,
                                                                        core_params, source_params)
-            dim = 1
         elif pde == 'steady_advection_diffusion_1D':
-            u_sym, x_sym = self.steady_advection_diffusion_1D(bc, bc_params, grid_params,
+            dim = 1
+            u_sym, x_sym = self.steady_advection_diffusion_1D(dim, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
-            dim = 1
         elif pde == 'laplace_1D':
-            u_sym, x_sym = self.laplace_1D(bc, bc_params, grid_params,
-                                           core_params, source_params)
             dim = 1
+            u_sym, x_sym = self.laplace_1D(dim, bc_types, bc_params, grid_params,
+                                           core_params, source_params)
         elif pde == 'laplace_2D':
-            u_sym, x_sym, y_sym = self.laplace_2D(bc, bc_params, grid_params,
-                                                  core_params, source_params)
             dim = 2
+            u_sym, x_sym, y_sym = self.laplace_2D(dim, bc_types, bc_params, grid_params,
+                                                  core_params, source_params)
         if dim == 1:
             L = grid_params["L"]
             n = grid_params["n"]
@@ -62,7 +62,7 @@ class ExactSolution:
             U = u_num(X, Y)
             return U, X, Y
 
-    def steady_diffusion_reaction_1D(self, bc, bc_params, grid_params, core_params, source_params):
+    def steady_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Diffusion-reaction equation (aka Helmholtz equation):
         # -D*u_xx + R*u = f
         D = core_params["D"]
@@ -94,12 +94,12 @@ class ExactSolution:
         # u = uc + up
         # constants are set afterwards through boundary conditions
 
-        c0, c1 = self.solve_for_bc_1D(bc, L, mu_0, mu_1, x, up, dupdx)
+        c0, c1 = self.solve_for_bc_1D(bc_types, bc_params, L, mu_0, mu_1, x, up, dupdx)
         uc = c0*sp.exp(mu_0*x) + c1*sp.exp(mu_1*x)
         u = uc + up  # this is a symbolic function
         return u, x
 
-    def steady_advection_diffusion_reaction_1D(self, bc, bc_params, grid_params,
+    def steady_advection_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params,
                                                core_params, source_params):
         # Advection-diffusion-reaction equation
         # A*u_x - D*u_xx + R*u = f
@@ -137,12 +137,12 @@ class ExactSolution:
         # u = uc + up
         # constants are set afterwards through boundary conditions
 
-        c0, c1 = self.solve_for_bc_1D(bc, L, mu_0, mu_1, x, up, dupdx)
+        c0, c1 = self.solve_for_bc_1D(bc_types, bc_params, L, mu_0, mu_1, x, up, dupdx)
         uc = c0*sp.exp(mu_0*x) + c1*sp.exp(mu_1*x)
         u = uc + up  # this is a symbolic function
         return u, x
 
-    def steady_advection_diffusion_1D(self, bc, bc_params, grid_params,
+    def steady_advection_diffusion_1D(self, dim, bc_types, bc_params, grid_params,
                                       core_params, source_params):
         # Advection-diffusion equation
         # A*u_x - D*u_xx = f
@@ -180,44 +180,44 @@ class ExactSolution:
         # u = uc + up
         # constants are set afterwards through boundary conditions
 
-        c0, c1 = self.solve_for_bc_1D(bc, L, mu_0, mu_1, x, up, dupdx)
+        c0, c1 = self.solve_for_bc_1D(bc_types, bc_params, L, mu_0, mu_1, x, up, dupdx)
         uc = c0*sp.exp(mu_0*x) + c1*sp.exp(mu_1*x)
         u = uc + up  # this is a symbolic function
         return u, x
 
-    def solve_for_bc_1D(self, bc, L, mu_0, mu_1, x, up, dupdx):
+    def solve_for_bc_1D(self, bc_types, bc_params, L, mu_0, mu_1, x, up, dupdx):
         # we need to solve for c0 and c1 using the boundary conditions
         # we will get an equation of the form A*c = B, with c = [c0; c1].
         # dirichlet bc: set value of solution at boundary
         # neumann bc: set value of normal gradient of solution at boundary
         A = np.zeros((2, 2))
         B = np.zeros(2)
-        if bc["left"][0] == "neumann":
+        if bc_types["left"] == "neumann":
             # -(mu_0*c0 + mu_1*c1 + dupdx(0)) = bc(left)
             A[0, 0] = -mu_0
             A[0, 1] = -mu_1
-            B[0] = dupdx.subs(x, 0) + bc["left"][1]
-        elif bc["left"][0] == "dirichlet":
+            B[0] = dupdx.subs(x, 0) + bc_params["left"][1]
+        elif bc_types["left"] == "dirichlet":
             # c0 + c1 + up(0) = bc(left)
             A[0, 0] = 1
             A[0, 1] = 1
-            B[0] = -up.subs(x, 0) + bc["left"][1]
-        if bc["right"][0] == "neumann":
+            B[0] = -up.subs(x, 0) + bc_params["left"][1]
+        if bc_types["right"] == "neumann":
             # mu_0*c0*exp(mu_0*L) + mu_1*c1*exp(mu_1*L) + dupdx(1) = bc(right)
             A[1, 0] = mu_0*np.exp(mu_0*L)
             A[1, 1] = mu_1*np.exp(mu_1*L)
-            B[1] = -dupdx.subs(x, L) + bc["right"][1]
-        elif bc["right"][0] == "dirichlet":
+            B[1] = -dupdx.subs(x, L) + bc_params["right"][1]
+        elif bc_types["right"] == "dirichlet":
             # c0*exp(mu_0*L) + c1*exp(mu_1*L) + up(L) = bc(right)
             A[1, 0] = np.exp(mu_0*L)
             A[1, 1] = np.exp(mu_1*L)
-            B[1] = -up.subs(x, L) + bc["right"][1]
+            B[1] = -up.subs(x, L) + bc_params["right"][1]
         c = np.linalg.solve(A, B)
         c0 = c[0]
         c1 = c[1]
         return c0, c1
 
-    def laplace_1D(self, bc, bc_params, grid_params, core_params, source_params):
+    def laplace_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # -D*u_xx = 0
         # D = core_params["D"]
@@ -239,26 +239,26 @@ class ExactSolution:
 
         A = np.zeros((2, 2))
         B = np.zeros(2)
-        if bc["left"][0] == "neumann":
+        if bc_types["left"] == "neumann":
             # -c1 = bc(left)
             A[0, 0] = 0
             A[0, 1] = -1
-            B[0] = bc["left"][1]
-        elif bc["left"][0] == "dirichlet":
+            B[0] = bc_params["left"][1]
+        elif bc_types["left"] == "dirichlet":
             # c0 = bc(left)
             A[0, 0] = 1
             A[0, 1] = 0
-            B[0] = bc["left"][1]
-        if bc["right"][0] == "neumann":
+            B[0] = bc_params["left"][1]
+        if bc_types["right"] == "neumann":
             # c1 = bc(right)
             A[1, 0] = 0
             A[1, 1] = 1
-            B[1] = bc["right"][1]
-        elif bc["right"][0] == "dirichlet":
+            B[1] = bc_params["right"][1]
+        elif bc_types["right"] == "dirichlet":
             # c0 + c1*L = bc(right)
             A[1, 0] = 1
             A[1, 1] = L
-            B[1] = bc["right"][1]
+            B[1] = bc_params["right"][1]
         c = np.linalg.solve(A, B)
         c0 = c[0]
         c1 = c[1]
@@ -267,7 +267,7 @@ class ExactSolution:
         u = uc
         return u, x
 
-    def laplace_2D(self, bc, bc_params, grid_params, core_params, source_params):
+    def laplace_2D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         # Laplace equation:
         # -D*(u_xx + u_yy) = 0
         # D = core_params["D"]
@@ -281,7 +281,7 @@ class ExactSolution:
         dL = bc_params["left"][4]
         eL = bc_params["left"][5]
 
-        bc_func_1 = bc_params["right"][0]
+        bc_func_R = bc_params["right"][0]
         aR = bc_params["right"][1]
         bR = bc_params["right"][2]
         cR = bc_params["right"][3]
@@ -389,16 +389,16 @@ class ExactSolution:
                     boundary_integral = (aL - aL*sp.cos(lambda_n*H))/lambda_n + (bL*(-lambda_n + lambda_n*sp.cos(cL*H)*sp.cos(lambda_n*H) + cL*sp.sin(cL*H)*sp.sin(lambda_n*H)))/(cL**2 - lambda_n**2)
                 else:
                     boundary_integral = ((2*aL + bL + bL*sp.cos(lambda_n*H))*sp.sin((lambda_n*H)/2)**2)/lambda_n
-            if bc["left"][0] == "dirichlet":
+            if bc_types["left"] == "dirichlet":
                 c_L_n = (2/H)*(1/sp.sinh(lambda_n*(-L)))*boundary_integral
                 u_L = u_L + c_L_n*sp.sinh(lambda_n*(x-L))*sp.sin(lambda_n*y)
 
-            if bc_func_1 == "quadratic":
+            if bc_func_R == "quadratic":
                 # quadratic boundary term
                 # g1 = a1 + b1*(y-c1) + d1*(y-e1)^2
                 # \int_0^H g1(y)*sin(lambda_n*y) dy
                 boundary_integral = (-2*dR + (aR - bR*cR + dR*eR**2)*lambda_n**2 - (dR*(-2 + lambda_n**2*(eR - H)**2) + lambda_n**2*(aR + bR*(-cR + H)))*sp.cos(lambda_n*H) + lambda_n*(bR + 2*dR*(-eR + H))*sp.sin(lambda_n*H))/lambda_n**3
-            elif bc_func_1 == "sine":
+            elif bc_func_R == "sine":
                 # sine boundary term
                 # g1 = a1 + b1*sin(c1*y)
                 # \int_0^H g1(y)*sin(lambda_n*y) dy
@@ -406,7 +406,7 @@ class ExactSolution:
                     boundary_integral = (aR - aR*sp.cos(lambda_n*H))/lambda_n + (bR*(lambda_n*sp.cos(lambda_n*H)*sp.sin(cR*H) - cR*sp.cos(cR*H)*sp.sin(lambda_n*H)))/(cR**2 - lambda_n**2)
                 else:  # for special case c1 = lambda_n we need a different solution
                     boundary_integral = (4*aR + 2*bR*lambda_n*H - 4*aR*sp.cos(lambda_n*H) - bR*sp.sin(2*lambda_n*H))/(4*lambda_n)
-            elif bc_func_1 == "cosine":
+            elif bc_func_R == "cosine":
                 # cosine boundary term
                 # g1 = a1 + b1*cos(c1*y)
                 # \int_0^H g1(y)*sin(lambda_n*y) dy
@@ -414,7 +414,7 @@ class ExactSolution:
                     boundary_integral = (aR - aR*sp.cos(lambda_n*H))/lambda_n + (bR*(-lambda_n + lambda_n*sp.cos(cR*H)*sp.cos(lambda_n*H) + cR*sp.sin(cR*H)*sp.sin(lambda_n*H)))/(cR**2 - lambda_n**2)
                 else:
                     boundary_integral = ((2*aR + bR + bR*sp.cos(lambda_n*H))*sp.sin((lambda_n*H)/2)**2)/lambda_n
-            if bc["right"][0] == "dirichlet":
+            if bc_types["right"] == "dirichlet":
                 c_R_n = (2/H)*(1/sp.sinh(lambda_n*L))*boundary_integral
                 u_R = u_R + c_R_n*sp.sinh(lambda_n*x)*sp.sin(lambda_n*y)
 
@@ -439,7 +439,7 @@ class ExactSolution:
                     boundary_integral = (aB - aB*sp.cos(mu_n*L))/mu_n + (bB*(-mu_n + mu_n*sp.cos(cB*L)*sp.cos(mu_n*L) + cB*sp.sin(cB*L)*sp.sin(mu_n*L)))/(cB**2 - mu_n**2)
                 else:
                     boundary_integral = ((2*aB + bB + bB*sp.cos(mu_n*L))*sp.sin((mu_n*L)/2)**2)/mu_n
-            if bc["bottom"][0] == "dirichlet":
+            if bc_types["bottom"] == "dirichlet":
                 c_B_n = (2/L)*(1/sp.sinh(mu_n*(-H)))*boundary_integral
                 u_B = u_B + c_B_n*sp.sinh(mu_n*(y-H))*sp.sin(mu_n*x)
 
@@ -464,7 +464,7 @@ class ExactSolution:
                     boundary_integral = (aT - aT*sp.cos(mu_n*L))/mu_n + (bT*(-mu_n + mu_n*sp.cos(cT*L)*sp.cos(mu_n*L) + cT*sp.sin(cT*L)*sp.sin(mu_n*L)))/(cT**2 - mu_n**2)
                 else:
                     boundary_integral = ((2*aT + bT + bT*sp.cos(mu_n*L))*sp.sin((mu_n*L)/2)**2)/mu_n
-            if bc["top"][0] == "dirichlet":
+            if bc_types["top"] == "dirichlet":
                 c_T_n = (2/L)*(1/sp.sinh(mu_n*H))*boundary_integral
                 u_T = u_T + c_T_n*sp.sinh(mu_n*y)*sp.sin(mu_n*x)
 
