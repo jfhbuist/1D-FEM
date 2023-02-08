@@ -2,7 +2,7 @@
 """
 Created on Thu Aug 25 17:23:49 2022
 
-@author: jurri
+@author: jfhbuist
 """
 
 import numpy as np
@@ -63,8 +63,7 @@ class ExactSolution:
             return U, X, Y
 
     def steady_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
-        # Diffusion-reaction equation (aka Helmholtz equation):
-        # -D*u_xx + R*u = f
+        """Diffusion-reaction equation (aka Helmholtz equation): -D*u_xx + R*u = f"""
         D = core_params["D"]
         R = core_params["R"]
         L = grid_params["L"]
@@ -101,8 +100,7 @@ class ExactSolution:
 
     def steady_advection_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params,
                                                core_params, source_params):
-        # Advection-diffusion-reaction equation
-        # A*u_x - D*u_xx + R*u = f
+        """Advection-diffusion-reaction equation: A*u_x - D*u_xx + R*u = f"""
         A = core_params["A"]
         D = core_params["D"]
         R = core_params["R"]
@@ -144,8 +142,7 @@ class ExactSolution:
 
     def steady_advection_diffusion_1D(self, dim, bc_types, bc_params, grid_params,
                                       core_params, source_params):
-        # Advection-diffusion equation
-        # A*u_x - D*u_xx = f
+        """Advection-diffusion equation: A*u_x - D*u_xx = f"""
         A = core_params["A"]
         D = core_params["D"]
         L = grid_params["L"]
@@ -186,10 +183,12 @@ class ExactSolution:
         return u, x
 
     def solve_for_bc_1D(self, bc_types, bc_params, L, mu_0, mu_1, x, up, dupdx):
-        # we need to solve for c0 and c1 using the boundary conditions
-        # we will get an equation of the form A*c = B, with c = [c0; c1].
-        # dirichlet bc: set value of solution at boundary
-        # neumann bc: set value of normal gradient of solution at boundary
+        """Solve for c0 and c1 using the boundary conditions.
+
+        We will get an equation of the form A*c = B, with c = [c0; c1].
+        dirichlet bc: set value of solution at boundary
+        neumann bc: set value of normal gradient of solution at boundary
+        """
         A = np.zeros((2, 2))
         B = np.zeros(2)
         if bc_types["left"] == "neumann":
@@ -218,8 +217,7 @@ class ExactSolution:
         return c0, c1
 
     def laplace_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
-        # Laplace equation:
-        # -D*u_xx = 0
+        """Laplace equation: -D*u_xx = 0"""
         # D = core_params["D"]
         L = grid_params["L"]
 
@@ -268,8 +266,7 @@ class ExactSolution:
         return u, x
 
     def laplace_2D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
-        # Laplace equation:
-        # -D*(u_xx + u_yy) = 0
+        """Laplace equation: -D*(u_xx + u_yy) = 0"""
         # D = core_params["D"]
         L = grid_params["L"]
         H = grid_params["H"]

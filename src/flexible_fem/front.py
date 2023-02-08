@@ -2,7 +2,7 @@
 """
 Created on Thu Aug 25 12:32:48 2022
 
-@author: jurri
+@author: jfhbuist
 """
 
 import numpy as np
@@ -36,8 +36,7 @@ class NumericalSolution:
             return U, X, Y
 
     def steady_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
-        # Diffusion-reaction equation (aka Helmholtz equation):
-        # -D*u_xx + R*u = f
+        """Diffusion-reaction equation (aka Helmholtz equation): -D*u_xx + R*u = f"""
         D = core_params["D"]
         R = core_params["R"]
         L = grid_params["L"]
@@ -52,7 +51,7 @@ class NumericalSolution:
             # xy is a list, with xy[0] = x
             # this is done for generality, so that the code works for 1D and 2D
             f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
-            
+
         bc_functions = {}
         for lb in bc_params:
             if bc_params[lb][0] == "constant":
@@ -106,8 +105,7 @@ class NumericalSolution:
 
     def steady_advection_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params,
                                                core_params, source_params):
-        # Advection-diffusion-reaction equation
-        # A*u_x - D*u_xx + R*u = f
+        """Advection-diffusion-reaction equation: A*u_x - D*u_xx + R*u = f"""
         A = core_params["A"]
         D = core_params["D"]
         R = core_params["R"]
@@ -121,7 +119,7 @@ class NumericalSolution:
         if source_function == "periodic":
             # periodic source term:
             f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
-            
+
         bc_functions = {}
         for lb in bc_params:
             if bc_params[lb][0] == "constant":
@@ -161,8 +159,7 @@ class NumericalSolution:
 
     def steady_advection_diffusion_1D(self, dim, bc_types, bc_params, grid_params,
                                       core_params, source_params):
-        # Advection-diffusion equation
-        # A*u_x - D*u_xx = f
+        """Advection-diffusion equation: A*u_x - D*u_xx = f"""
         A = core_params["A"]
         D = core_params["D"]
         L = grid_params["L"]
@@ -175,7 +172,7 @@ class NumericalSolution:
         if source_function == "periodic":
             # periodic source term:
             f = lambda xy: alpha + beta*np.sin(gamma*xy[0])
-            
+
         bc_functions = {}
         for lb in bc_params:
             if bc_params[lb][0] == "constant":
@@ -212,15 +209,14 @@ class NumericalSolution:
         return u, x_vec
 
     def laplace_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
-        # Laplace equation:
-        # - D*u_xx = 0
+        """Laplace equation: - D*u_xx = 0"""
         D = core_params["D"]
         L = grid_params["L"]
         n = grid_params["n"]
 
         # zero source term:
         f = lambda xy: 0
-        
+
         bc_functions = {}
         for lb in bc_params:
             if bc_params[lb][0] == "constant":
@@ -253,8 +249,7 @@ class NumericalSolution:
         return u, x_vec
 
     def laplace_2D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
-        # Laplace equation:
-        # - D*(u_xx + u_yy) = 0
+        """Laplace equation: - D*(u_xx + u_yy) = 0"""
         D = core_params["D"]
         L = grid_params["L"]
         nx = grid_params["nx"]

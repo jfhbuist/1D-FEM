@@ -1,34 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import numpy as np
-import scipy as sp
-
 """
 Created on Thu Nov 18 16:50:37 2021
 
-@author: jurriaan
+@author: jfhbuist
 """
 
-"""
-FEM solver 1D
-
-Creates stiffness matrix S and source vector d, to set up the problem
-  S*c = d
-(with c = u at vertices)
-
-Split domain integral (\int_0^1) into integrals over the elements e_k  # noqa: W605
-
-Continuous Galerkin: Test functions equal to basis functions
-"""
-
-
-# def reduce_lambda(func, args):
-#     # this function takes a lambda function of multiple variables, and returns
-#     # a lambda function of a single variable
-#     # args can contain an arbitrary number of arguments
-#     # asterisk unpacks tuple
-#     return lambda x: func(x, *args)
+import numpy as np
+import scipy as sp
 
 
 class Grid:
@@ -130,7 +109,7 @@ class Grid:
 
 class Discretization:
     def __init__(self, dim):
-        # Define discretization by setting basis and test functions
+        """Define discretization by setting basis and test functions."""
         self.dim = dim
         # Isoparametric mapping: Use same shape functions for basis functions as for coordinate
         # transformation
@@ -139,16 +118,6 @@ class Discretization:
         # Standard Galerkin: Use same shape functions for test functions as for basis functions
         self.test_functions, self.dvdxieta = self.define_shape_functions()
         self.test_functions_bound, self.dvdxieta_bound = self.define_shape_functions(True)
-
-    # def generate_shape_functions(self, vert_coords, boundary=False):
-    #     # Generate basis or test functions for current element (fill in vertex coordinates)
-    #     vert_coords_flat = tuple(np.array(vert_coords).reshape(-1))
-    #     general_shape_functions = self.define_shape_functions(boundary)
-    #     local_shape_functions = list()
-    #     for idx, general_shape_function in enumerate(general_shape_functions):
-    #         local_shape_functions.append(reduce_lambda(general_shape_function, vert_coords_flat))
-    #         # reduce_lambda necessary to eliminate elusive bug, where local basis function set in certain iteration, would change in subsequent iteration
-    #     return local_shape_functions
 
     def define_shape_functions(self, boundary=False):
         if boundary:
@@ -164,7 +133,7 @@ class Discretization:
         return shape_functions
 
     def define_shape_functions_point(self):
-        # Define shape functions for a zero-width element defined by one vertex
+        """Define shape functions for a zero-width element defined by one vertex."""
         # x0 is the only bounding vertex, and is also the midpoint of the element
         # N0 is 1 at x0, and zero elsewhere
         # define as python function
@@ -174,7 +143,7 @@ class Discretization:
         return shape_functions, dndxieta
 
     def define_shape_functions_line(self):
-        # Define shape functions for an element defined by its two bounding vertices
+        """Define shape functions for an element defined by its two bounding vertices."""
         # The reference element is a line with vertices xi = (0), (1)
         # for a given element, n0 is 1 at the left vertex, and corresponds to elmat[i,0]
         # for a given element, n1 is 1 at the right vertex, and corresponds to elmat[i,1]
@@ -187,7 +156,7 @@ class Discretization:
         return shape_functions, dndxieta
 
     def define_shape_functions_triangle(self):
-        # Define shape functions for an element defined by its three bounding vertices
+        """Define shape functions for an element defined by its three bounding vertices."""
         # These can be oriented arbitrarily, but the reference element is a right-angled triangle
         # with vertices xi, eta = (0,0), (1,0), (0,1).
         # for a given element, n0 is 1 at the bottom left vertex, and corresponds to elmat[i,0]
@@ -199,12 +168,11 @@ class Discretization:
         n1 = lambda xieta: xieta[0]
         n2 = lambda xieta: xieta[1]
         shape_functions = [n0, n1, n2]
-        # dndxieta = np.array([[-1, 1, 0], [-1, 0, 1]])
         dndxieta = np.array([[-1, -1], [1, 0], [0, 1]])
         return shape_functions, dndxieta
 
     def get_jacobian(self, vert_coords, boundary=False):
-        # Calculate jacobian dxy/dxieta
+        """Calculate jacobian dxy/dxieta."""
         if boundary:
             dim = self.dim - 1
         else:
@@ -218,7 +186,7 @@ class Discretization:
         return jacobian
 
     def get_jacobian_line(self, vert_coords):
-        # For line element, we calculate jacobian dx/dxi
+        """For line element, calculate jacobian dx/dxi."""
         # Use coordinate transformation xi = (x - x0)/dx, dxi/dx = 1/dx, dx = dx dxi
         # This implies x = xi*dx + x0
         # So Jacobian = dx
@@ -226,46 +194,15 @@ class Discretization:
         return jacobian
 
     def get_jacobian_triangle(self, vert_coords):
-        # For triangle element, calculate jacobian dxy/dxieta
+        """For triangle element, calculate jacobian dxy/dxieta."""
         # This is the 2x2 matrix [[dx/dxi, dy/dxi],[dx/deta, dy/deta]]
         # It can be calculated by multiplying the matrices dphi/dxieta and vert_coords
         jacobian = np.matmul(np.transpose(vert_coords), self.dphidxieta)
         # jacobian = np.matmul(vert_coords, self.dphidxieta)
         return jacobian
 
-    # def get_jacobian_inverse(self, vert_coords, boundary=False):
-    #     # Calculate inverse of jacobian dxy/dxieta
-    #     if boundary:
-    #         dim = self.dim - 1
-    #     else:
-    #         dim = self.dim
-    #     if dim == 0:
-    #         jacobian_inverse = 0
-    #     else:
-    #         # For line element, calculate jacobian inverse dxi/dx
-    #         # For triangle element, calculate jacobian inverse dxieta/dxy
-    #         # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
-    #         jacobian = self.get_jacobian(vert_coords)
-    #         jacobian_inverse = np.linalg.inv(jacobian)
-    #     return jacobian_inverse
-
-    # def get_jacobian_inverse_line(self, vert_coords):
-    #     # Calculate jacobian inverse dxi/dx
-    #     jacobian = self.get_jacobian_line(vert_coords)
-    #     jacobian_inverse = np.linalg.inv(jacobian)
-    #     return jacobian_inverse
-
-    # def get_jacobian_inverse_triangle(self, vert_coords):
-    #     # Calculate jacobian inverse dxieta/dxy
-    #     # This is the 2x2 matrix [[dxi/dx, deta/dx],[dxi/dy, deta/y]]
-    #     jacobian = self.get_jacobian_triangle(vert_coords)
-    #     # det = np.linalg.det(jac)
-    #     # jacobian_inverse = (1/det)*np.array([[jac[1, 1], -jac[0, 1]], [-jac[1, 0], jac[0, 0]]])
-    #     jacobian_inverse = np.linalg.inv(jacobian)
-    #     return jacobian_inverse
-
     def coordinate_transformation(self, vert_coords, function_xy, boundary=False):
-        # Transform function of xy to function of xieta
+        """Transform function of xy to function of xieta."""
         if boundary:
             dim = self.dim - 1
         else:
@@ -279,7 +216,7 @@ class Discretization:
         return function_xieta
 
     def coordinate_transformation_line(self, vert_coords, function_xy):
-        # Transform 1D function of x to function of xi
+        """Transform 1D function of x to function of xi."""
         # Use coordinate transformation xi = (x - x0)/dx, dxi/dx = 1/dx, dx = dx dxi
         # This implies x = xi*dx + x0
         # This can be written systematically as x = x0*phi0(xi) + x1*phi1(xi)
@@ -290,7 +227,7 @@ class Discretization:
         return function_xieta
 
     def coordinate_transformation_triangle(self, vert_coords, function_xy):
-        # Transform 2D function of xy to function of xieta
+        """Transform 2D function of xy to function of xieta."""
         # Use x = x0*phi0(xi, eta) + x1*phi1(xi, eta) + x2*phi2(xi, eta)
         # and y = y0*phi0(xi, eta) + y1*phi1(xi, eta) + y2*phi2(xi, eta)
         phi = self.basis_functions
@@ -307,7 +244,7 @@ class Discretization:
         return function_xieta
 
     def coordinate_transformation_inverse(self, vert_coords, function_xieta):
-        # Transform function of xieta to function of xy
+        """Transform function of xieta to function of xy."""
         if self.dim == 1:
             function_xy = self.coordinate_transformation_inverse_line(vert_coords, function_xieta)
         elif self.dim == 2:
@@ -315,7 +252,7 @@ class Discretization:
         return function_xy
 
     def coordinate_transformation_inverse_line(self, vert_coords, function_xieta):
-        # Transform 1D function of xi to function of x
+        """Transform 1D function of xi to function of x."""
         # Use coordinate transformation xi = (x - x0)/dx, dxi/dx = 1/dx, dx = dx dxi
         x0 = vert_coords[0]
         x1 = vert_coords[1]
@@ -324,7 +261,7 @@ class Discretization:
         return function_xy
 
     def coordinate_transformation_inverse_triangle(self, vert_coords, function_xieta):
-        # Transform 2D function of xieta to function of xy
+        """Transform 2D function of xieta to function of xy."""
         # Use (x, y) = (x0, y0) + (dxy/dxieta)*(xi, eta)
         x0 = vert_coords[0, 0]
         y0 = vert_coords[0, 1]
@@ -342,7 +279,7 @@ class Discretization:
         return function_xy
 
     def integrate_element(self, integrand, boundary=False):
-        # Integrate function of xieta over element
+        """Integrate function of xieta over element."""
         if boundary:
             dim = self.dim - 1
         else:
@@ -356,7 +293,7 @@ class Discretization:
         return result
 
     def integrate_element_point(self, integrand):
-        # Integrate 0D function of xi over 0D element
+        """Integrate 0D function of xi over 0D element."""
         # We need to integrate over the boundary.
         # We assume the boundary conditions are for the component normal to the boundary.
         # So we do not have to add minus signs to some boundaries.
@@ -366,69 +303,21 @@ class Discretization:
         return result
 
     def integrate_element_line(self, integrand):
-        # Integrate 1D function of xi over element
+        """Integrate 1D function of xi over element."""
         integrand_expanded = lambda xi: integrand([xi])
         result = sp.integrate.quad(integrand_expanded, 0, 1)[0]
         return result
 
     def integrate_element_triangle(self, integrand):
-        # Integrate 2D function of xieta over element
+        """Integrate 2D function of xieta over element."""
         integrand_expanded = lambda eta, xi: integrand([xi, eta])
         eta_lower_bound = 0
         eta_upper_bound = lambda xi: 1 - xi
         result = sp.integrate.dblquad(integrand_expanded, 0, 1, eta_lower_bound, eta_upper_bound)[0]
         return result
 
-    def differentiate(self, vert_coords, function):
-        # Differentiate function of xieta to xy within element
-        if self.dim == 1:
-            result = self.differentiate_1D(vert_coords, function)
-        elif self.dim == 2:
-            result = self.differentiate_2D(vert_coords, function)
-        return result
-
-    def differentiate_1D(self, vert_coords, function):
-        # Differentiate 1D function of xi to x within element
-        # Expand list argument to get direct function of variables
-        function_expanded = lambda xi: function([xi])
-        x0 = vert_coords[0]
-        x1 = vert_coords[1]
-        dx_i = abs(x1 - x0)
-        # calculate numerical derivative of function using central differences
-        result_expanded = lambda xi: sp.misc.derivative(function_expanded, xi, 1e-6)*(1/dx_i)
-        # multiply ddxi by (1/dx) to get ddx (as function of xi)
-        # Compact arguments to get function of list of variables
-        result = lambda xieta: result_expanded([xieta[0]])
-        return result
-
-    def calculate_element_size(self, vert_coords):
-        # Calculate the size of an element
-        if self.dim == 1:
-            size = self.calculate_element_size_1D(vert_coords)
-        elif self.dim == 2:
-            size = self.calculate_element_size_2D(vert_coords)
-        return size
-
-    def calculate_element_size_1D(self, vert_coords):
-        # Calculate length of element
-        x0 = vert_coords[0]
-        x1 = vert_coords[1]
-        dx_i = abs(x1 - x0)
-        return dx_i
-
-    def calculate_element_size_2D(self, vert_coords):
-        # Calculate area of element
-        x0 = vert_coords[0, 0]
-        y0 = vert_coords[0, 1]
-        x1 = vert_coords[1, 0]
-        y1 = vert_coords[1, 1]
-        x2 = vert_coords[2, 0]
-        y2 = vert_coords[2, 1]
-        area = ((x0-x1)*(y1-y2)+(y0-y1)*(x2-x1))/2
-        return area
-
     def check_if_point_in_element(self, vert_coords, point_coords):
-        # Check if point with given coordinates is in the element defined by vert_coords
+        """Check if point with given coordinates is in the element defined by vert_coords."""
         if self.dim == 1:
             check = self.check_if_point_in_element_line(vert_coords, point_coords)
         elif self.dim == 2:
@@ -436,7 +325,7 @@ class Discretization:
         return check
 
     def check_if_point_in_element_line(self, vert_coords, point_coords):
-        # Check if point with given coordinates is in the 1D element defined by vert_coords
+        """Check if point with given coordinates is in the 1D element defined by vert_coords."""
         xi_xieta = lambda xieta: xieta[0]
         xi_xy = self.coordinate_transformation_inverse_line(vert_coords, xi_xieta)
         xp = point_coords
@@ -448,7 +337,7 @@ class Discretization:
         return check
 
     def check_if_point_in_element_triangle(self, vert_coords, point_coords):
-        # Check if point with given coordinates is in the 2D element defined by vert_coords
+        """Check if point with given coordinates is in the 2D element defined by vert_coords."""
         xi_xieta = lambda xieta: xieta[0]
         eta_xieta = lambda xieta: xieta[1]
         xi_xy = self.coordinate_transformation_inverse_triangle(vert_coords, xi_xieta)
@@ -464,7 +353,7 @@ class Discretization:
 
 
 class SourceOperator:
-    # Discrete operator determined by a set function
+    """Discrete operator determined by a set function."""
     def __init__(self, grid, discretization, operators):
         self.grid = grid
         self.discretization = discretization
@@ -477,8 +366,10 @@ class SourceOperator:
         return d
 
     def assemble_source_vector(self):
-        # Operates on vertices. For each vertex, sum the contributions of all
-        # its neighbouring elements.
+        """Operates on vertices.
+
+        For each vertex, sum the contributions of all its neighbouring elements.
+        """
         grid = self.grid
         d = np.zeros(len(grid.xy_vert))
         for i, xy_i in enumerate(grid.xy_elem):  # loop over elements
@@ -497,7 +388,7 @@ class SourceOperator:
         return d
 
     def generate_element_vector(self, elem_vertices):
-        # Operates on elements.
+        """Operates on elements."""
         grid = self.grid
         discretization = self.discretization
         vert_coords = np.array([grid.xy_vert[ev] for ev in elem_vertices])
@@ -534,7 +425,7 @@ class Source(SourceOperator):
 
 
 class SolutionOperator():
-    # Discrete operator acting on the solution
+    """Discrete operator acting on the solution."""
     def __init__(self, grid, discretization, operators):
         self.grid = grid
         self.discretization = discretization
@@ -547,10 +438,12 @@ class SolutionOperator():
         return s
 
     def assemble_stiffness_matrix(self):
-        # Operates on vertices. For each vertex, sum the contributions of all
-        # its neighbouring elements. Each vertex has an accompanying linear
-        # basis function. In 1D this is composed of phi1 operating on its left
-        # element, and phi0 operating on its right element.
+        """Operates on vertices.
+
+        For each vertex, sum the contributions of allits neighbouring elements. Each vertex has an
+        accompanying linear basis function. In 1D this is composed of phi1 operating on its left
+        element, and phi0 operating on its right element.
+        """
         grid = self.grid
         s = np.zeros((len(grid.xy_vert), len(grid.xy_vert)))  # n = number of vertices
         for i, xy_i in enumerate(grid.xy_elem):  # loop over elements
@@ -574,8 +467,10 @@ class SolutionOperator():
         return s
 
     def generate_element_matrix(self, elem_vertices):
-        # Element matrix, operates on elements.
-        # Matrix should be symmetric. Numerical calculation.
+        """Element matrix, operates on elements.
+
+        Matrix should be symmetric. Numerical calculation.
+        """
         # get vertex coordinates
         grid = self.grid
         discretization = self.discretization
@@ -616,8 +511,10 @@ class NaturalBoundary():
         return b_nat
 
     def generate_natural_boundary_term(self, belem_vertices, lb):
-        # Operates on boundary element
-        # natural boundary conditions are implicitly satisfied by the formulation
+        """Operates on boundary element.
+
+        Natural boundary conditions are implicitly satisfied by the formulation.
+        """
         grid = self.grid
         discretization = self.discretization
         bc_types = self.bc_types
@@ -638,7 +535,7 @@ class NaturalBoundary():
         return b_elem
 
     def assemble_natural_boundary_vector(self):
-        # Operates on vertices
+        """Operates on vertices."""
         grid = self.grid
         b = np.zeros(len(grid.xy_vert))
         # loop over boundary elements
@@ -670,18 +567,17 @@ class Diffusion(SolutionOperator, NaturalBoundary):
         self.b_nat = self.assemble_natural_boundary_vector()
 
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
-        # generate integrand for diffusion
-        # this is only one of the integrands, for one of the combinations of test and basis functions
-        # discretization = self.discretization
-        # a = self.coeff*discretization.differentiate(vert_coords, test_function)(0.5)*discretization.differentiate(vert_coords, basis_function)(0.5)*det
-        # print(a)
-        # b = self.coeff*(dvjdxy*dphikdxy).item()*det
-        # print(b)
+        """Generate integrand for diffusion.
+
+        This is only one of the integrands, for one of the combinations of test and basis
+        functions.
+        """
         integrand = lambda xieta: self.coeff*(np.dot(dvjdxy, dphikdxy)).item()*det
         return integrand
 
     def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_function):
-        # since we reduce the order of the diffusion operator through integration by parts, boundary terms appear, which must be added to the equation
+        # Since we reduce the order of the diffusion operator through integration by parts,
+        # boundary terms appear, which must be added to the equation.
         # since this term will be added to right-hand side, it gets a minus sign
         # discretization = self.discretization
         if bc_type == "neumann":
@@ -706,8 +602,7 @@ class Reaction(SolutionOperator, NaturalBoundary):
         self.b_nat = self.assemble_natural_boundary_vector()
 
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
-        # generate integrand for reaction
-        discretization = self.discretization
+        """Generate integrand for reaction."""
         integrand = lambda xieta: self.coeff*test_function(xieta)*basis_function(xieta)*det
         return integrand
 
@@ -731,8 +626,7 @@ class Advection(SolutionOperator, NaturalBoundary):
         self.b_nat = self.assemble_natural_boundary_vector()
 
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
-        # generate integrand for linear advection
-        discretization = self.discretization
+        """Generate integrand for linear advection."""
         integrand = lambda xieta: self.coeff*dphikdxy.item()*test_function(xieta)*det
         return integrand
 
@@ -782,13 +676,6 @@ class Solution():
                 if bc_type == "dirichlet":
                     # set value for this boundary node
                     bc_value = bc_function(xv)
-                    # if bc_functions[lb][0] == "constant":
-                    #     bc_value = bc_functions[lb][1]
-                    # elif bc_functions[lb][0] == "sine":
-                    #     if lb == "left" or lb == "right":
-                    #         bc_value = bc_functions[lb][1] + bc_functions[lb][2]*np.sin(bc_functions[lb][3]*xv[1])
-                    #     elif lb == "bottom" or lb == "top":
-                    #         bc_value = bc_functions[lb][1] + bc_functions[lb][2]*np.sin(bc_functions[lb][3]*xv[0])
                     g[idx1] = bc_value
 
         # right-hand side contains contributions from source, natural boundary conditions, and dirichlet boundary conditions
@@ -811,7 +698,6 @@ class Solution():
                     # this is possible because we have moved these terms to the right hand side by subtracting np.matmul(s,g) (aka forward substitution)
                     s[:, idx1] = 0
                     s[idx1, idx1] = 1
-
                     # eliminate row in rhs
                     # this changes the equations for the boundary vertices into 1*boundary_vertex = bc
                     h[idx1] = g[idx1]

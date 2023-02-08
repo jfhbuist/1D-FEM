@@ -9,10 +9,10 @@ Implemented boundary conditions include inhomogeneous Dirichlet and inhomogeneou
 
 To use this package, first install it (in a virtual environment):
 ```
-pip install .
+pip install git+https://github.com/jfhbuist/flexible-fem.git
 ```
 
-Next, run one of the examples:
+Next, download and run one of the examples:
 ```
 python examples/laplace_2D.py
 ```
