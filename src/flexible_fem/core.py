@@ -1,26 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import numpy as np
-import scipy as sp
-
 """
 Created on Thu Nov 18 16:50:37 2021
 
-@author: jurriaan
+@author: jfhbuist
 """
 
-"""
-FEM solver 1D
-
-Creates stiffness matrix S and source vector d, to set up the problem
-  S*c = d
-(with c = u at vertices)
-
-Split domain integral (\int_0^1) into integrals over the elements e_k  # noqa: W605
-
-Continuous Galerkin: Test functions equal to basis functions
-"""
+import numpy as np
+import scipy as sp
 
 
 class Grid:

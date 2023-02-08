@@ -51,7 +51,7 @@ def test_diffusion_1D():
         "left": ["constant", 0],
         "right": ["constant", 0]
     }
-    
+
     bc_functions = {}
     for lb in bc_params:
         if bc_params[lb][0] == "constant":
