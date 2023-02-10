@@ -29,6 +29,12 @@ bc_params = {
     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
 }
+# bc_params = {
+#     "left": ["quadratic", 1, 0, 0, 0, 0],  # g(y) = a + b*(y-c) + d*(y-e)^2
+#     "right": ["quadratic", 1, 0, 0, 0, 0],  # g(y) = a + b*(y-c) + d*(y-e)^2
+#     "bottom": ["quadratic", 1, 0, 0, 0, 0],  # g(x) = a + b*(y-c) + d*(y-e)^2
+#     "top": ["quadratic", 1, 0, 0, 0, 0],  # g(x) = a + b*(y-c) + d*(y-e)^2
+# }
 core_params = {
     "D":        1
 }

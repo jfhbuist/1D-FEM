@@ -263,6 +263,11 @@ class NumericalSolution:
         for lb in bc_params:
             if bc_params[lb][0] == "constant":
                 bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1]
+            elif bc_params[lb][0] == "quadratic":
+                if lb == "left" or lb == "right":
+                    bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1] + bc_params[lb][2]*(xy[1]-bc_params[lb][3]) + bc_params[lb][4]*(xy[1]-bc_params[lb][5])**2
+                elif lb == "bottom" or lb == "top":
+                    bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1] + bc_params[lb][2]*(xy[0]-bc_params[lb][3]) + bc_params[lb][4]*(xy[0]-bc_params[lb][5])**2
             elif bc_params[lb][0] == "sine":
                 if lb == "left" or lb == "right":
                     bc_functions[lb] = lambda xy, lb=lb: bc_params[lb][1] + bc_params[lb][2]*np.sin(bc_params[lb][3]*xy[1])

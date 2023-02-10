@@ -15,6 +15,14 @@ bc_params = {
     "left": ["constant", -1],
     "right": ["constant", 2]
     }
+# bc_types = {
+#     "left": "dirichlet",
+#     "right": "dirichlet"
+# }
+# bc_params = {
+#     "left": ["constant", 1],
+#     "right": ["constant", 1]
+#     }
 grid_params = {
     "L": 1.7,
     "n": 139
