@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import flexible_fem as fem
 
-# # Reference input:
+# Reference input:
 pde = "steady_diffusion_reaction_1D"
 # neumann bc: set value of gradient of solution normal to boundary
 bc_types = {
@@ -33,8 +33,8 @@ source_params = {
 # # set 12
 # pde = "steady_diffusion_reaction_1D"
 # bc_types = {
-#     "left": ["neumann", 0],
-#     "right": ["neumann", 0]
+#     "left": "neumann",
+#     "right": "neumann"
 # }
 # bc_params = {
 #     "left": ["constant", 0],
@@ -58,8 +58,8 @@ source_params = {
 # # set 13
 # pde = "steady_diffusion_reaction_1D"
 # bc_types = {
-#     "left": ["neumann", 0],
-#     "right": ["neumann", 0]
+#     "left": "neumann",
+#     "right": "neumann"
 # }
 # bc_params = {
 #     "left": ["constant", 0],
