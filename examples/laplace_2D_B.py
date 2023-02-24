@@ -5,11 +5,29 @@ import numpy as np
 import flexible_fem as fem
 
 pde = "laplace_2D"
+# bc_types = {
+#     "left": "neumann",
+#     "right": "dirichlet",
+#     "bottom": "dirichlet",
+#     "top": "dirichlet",
+# }
+# bc_types = {
+#     "left": "dirichlet",
+#     "right": "neumann",
+#     "bottom": "dirichlet",
+#     "top": "dirichlet",
+# }
+# bc_types = {
+#     "left": "dirichlet",
+#     "right": "dirichlet",
+#     "bottom": "neumann",
+#     "top": "dirichlet",
+# }
 bc_types = {
-    "left": "neumann",
+    "left": "dirichlet",
     "right": "dirichlet",
     "bottom": "dirichlet",
-    "top": "dirichlet",
+    "top": "neumann",
 }
 # grid_params = {
 #     "L": 1,
@@ -23,11 +41,17 @@ grid_params = {
     "nx": 20,
     "ny": 30
 }
+# bc_params = {
+#     "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+#     "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+#     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+#     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+# }
 bc_params = {
-    "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
-    "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
-    "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
-    "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+    "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
+    "right": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
+    "bottom": ["sine", 0, 1, np.pi/(grid_params["L"]), 0, 0],  # g(x) = a + b*sin(c*x)
+    "top": ["sine", 0, 1, np.pi/(grid_params["L"]), 0, 0],  # g(x) = a + b*sin(c*x)
 }
 core_params = {
     "D":        1

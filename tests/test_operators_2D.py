@@ -6,7 +6,10 @@ import flexible_fem as fem
 def test_diffusion_2D():
     # Test the construction of the diffusion operator
 
+    # Load test data
     reference_stiffness = np.loadtxt('tests/data_test_diffusion_2D.txt')
+    # To save test data, use
+    # "np.savetxt('tests/data_test_diffusion_2D.txt', stiffness.s, fmt='%1.4e')"
 
     dim = 2
     D = 1.3
