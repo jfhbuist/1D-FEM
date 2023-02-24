@@ -368,7 +368,7 @@ class ExactSolution:
         # the solution method yields a sum to N = infinity
         # we need to sum over a finite number
         # This may need to be increased to reduce oscillations
-        N = 10
+        N = 5
 
         for n in range(1, N+1):
             lambda_n = n*np.pi/H
