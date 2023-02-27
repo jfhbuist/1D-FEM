@@ -308,9 +308,9 @@ class ExactSolution:
         # separation of variables:
         # general separated solution:
         # u = X(x)*Y(y)
-
         # we solve the boundary value problem in 4 parts
-        # Here we give the solution for the problem with four dirichlet boundaries
+        
+        # Here we give the solution for the problem with four dirichlet boundaries (bc = 1)
 
         # for the left boundary, we take
         # X'' = lambda^2*X, Y'' = -lambda^2*Y
@@ -327,23 +327,23 @@ class ExactSolution:
         # X(x) = A*cosh(lambda*x) + B*sinh(lambda*x)
         # Y(y) = C*cos(lambda*y) + D*sin(lambda*y)
         # lambda_n = n*pi/H
-        # Assume homogeneous dirichlet bc everywhere, except at left boundary u = gR(y)
+        # Assume homogeneous dirichlet bc everywhere, except at right boundary u = gR(y)
         # A = 0, C = 0
         # u_R = \sum_n c_R_n*sinh(lambda_n*x)*sin(lambda_n*y)
         # c_R_n = (2/H)*(1/sinh(lambda_n*L))*\int_0^H gR(y)*sin(lambda_n*y) dy
 
         # for the bottom boundary, we take
-        # X'' = -lambda^2*X, Y'' = lambda^2*Y
+        # X'' = -mu^2*X, Y'' = mu^2*Y
         # X(x) = A*cos(mu*x) + B*sin(mu*x)
         # Y(y) = C*cosh(mu*(y-H)) + D*sinh(mu*(y-H))
         # mu_n = n*pi/L
-        # Assume homogeneous dirichlet bc everywhere, except at bottom boundary u = gB(x0)
+        # Assume homogeneous dirichlet bc everywhere, except at bottom boundary u = gB(x)
         # A = 0, C = 0
         # u_B = \sum_n c_B_n*sinh(mu_n*(y-H))*sin(mu_n*x)
         # c_B_n = (2/L)*(1/sinh(mu_n*(-H))*\int_0^L gB(x)*sin(mu_n*x) dx
 
         # for the top boundary, we take
-        # X'' = -lambda^2*X, Y'' = lambda^2*Y
+        # X'' = -mu^2*X, Y'' = mu^2*Y
         # X(x) = A*cos(mu*x) + B*sin(mu*x)
         # Y(y) = C*cosh(mu*y) + D*sinh(mu*y)
         # mu_n = n*pi/L
@@ -351,6 +351,59 @@ class ExactSolution:
         # A = 0, C = 0
         # u_T = \sum_n c_T_n*sinh(mu_n*x)*sin(mu_n*x)
         # c_T_n = (2/L)*(1/sinh(mu_n*H)*\int_0^L gT(x)*sin(mu_n*x) dx
+
+        # Now we give the solution for the problem with one neumann boundary (bc = 2)
+
+        # for the left boundary, we take
+        # X'' = lambda^2*X, Y'' = -lambda^2*Y
+        # X(x) = A*cosh(lambda*(x-L)) + B*sinh(lambda*(x-L))
+        # Y(y) = C*cos(lambda*y) + D*sin(lambda*y)
+        # lambda_n = n*pi/H
+        # Assume homogeneous dirichlet bc everywhere, except at left boundary du/dx = -gL(y)
+        # A = 0, C = 0
+        # u_L = \sum_n c_L_n*sinh(lambda_n*(x-L))*sin(lambda_n*y)
+        # Sum from 1 to infinity, since sin(0) = 0
+        # c_L_n = -(2/H)*(1/(lambda_n*cosh(lambda_n*(-L))))*\int_0^H gL(y)*sin(lambda_n*y) dy
+
+        # for the right boundary, we take
+        # X'' = lambda^2*X, Y'' = -lambda^2*Y
+        # X(x) = A*cosh(lambda*x) + B*sinh(lambda*x)
+        # Y(y) = C*cos(lambda*y) + D*sin(lambda*y)
+        # lambda_n = n*pi/H
+        # Assume homogeneous dirichlet bc at bottom and top boundaries,
+        # and homogeneuous neumann at left boundary.
+        # At right boundary we set u = gR(y).
+        # B = 0, C = 0
+        # u_R = \sum_n c_R_n*cosh(lambda_n*x)*sin(lambda_n*y)
+        # Sum from 1 to infinity, since sin(0) = 0
+        # c_R_n = (2/H)*(1/cosh(lambda_n*L))*\int_0^H gR(y)*sin(lambda_n*y) dy
+
+        # for the bottom boundary, we take
+        # X'' = -mu^2*X, Y'' = mu^2*Y
+        # X(x) = A*cos(mu*x) + B*sin(mu*x)
+        # Y(y) = C*cosh(mu*(y-H)) + D*sinh(mu*(y-H))
+        # mu_n = (n-1/2)*pi/L
+        # Assume homogeneous dirichlet bc at right and top boundaries,
+        # and homogeneous neumann at left boundary.
+        # At bottom boundary we set u = gB(x).
+        # B = 0, C = 0
+        # u_B = \sum_n c_B_n*sinh(mu_n*(y-H))*cos(mu_n*x)
+        # Sum from 1 to infinity, since cos(mu_0*x) = cos(mu_1*x) (due to staggered wavelength)
+        # c_B_n = (2/L)*(1/sinh(mu_n*(-H))*\int_0^L gB(x)*cos(mu_n*x) dx
+        # c_B_0 = (1/L)*(1/sinh(mu_n*(-H))*\int_0^L gB(x) dx
+
+        # for the top boundary, we take
+        # X'' = -mu^2*X, Y'' = mu^2*Y
+        # X(x) = A*cos(mu*x) + B*sin(mu*x)
+        # Y(y) = C*cosh(mu*y) + D*sinh(mu*y)
+        # mu_n = (n-1/2)*pi/L
+        # Assume homogeneous bc at right and bottom boundaries,
+        # and homogeneous neumann at left boundary.
+        # At top boundary we set u = gT(x).
+        # B = 0, C = 0
+        # u_T = \sum_n c_T_n*sinh(mu_n*x)*cos(mu_n*x)
+        # Sum from 1 to infinity, since cos(mu_0*x) = cos(mu_1*x) (due to staggered wavelength)
+        # c_T_n = (2/L)*(1/sinh(mu_n*H)*\int_0^L gT(x)*cos(mu_n*x) dx
 
         if (bc_types["left"] == "dirichlet") and (bc_types["right"] == "dirichlet") and (bc_types["bottom"] == "dirichlet") and (bc_types["top"] == "dirichlet"):
             bc = 1
@@ -386,8 +439,11 @@ class ExactSolution:
 
         for n in range(1, N+1):
             lambda_n = n*np.pi/H
-            mu_n = n*np.pi/L
-            mu_n_stag = (n-1/2)*np.pi/L  # staggered
+            if bc == 1:
+                mu_n = n*np.pi/L
+            elif bc == 2:
+                # staggered wavelength, so cosine terms are zero at boundaries
+                mu_n = (n-1/2)*np.pi/L
 
             if bc_func_L == "sine":
                 # sine boundary term
@@ -455,11 +511,11 @@ class ExactSolution:
                     else:  # for special case cB = mu_n we need a different solution
                         boundary_integral = (4*aB + 2*bB*mu_n*L - 4*aB*sp.cos(mu_n*L) - bB*sp.sin(2*mu_n*L))/(4*mu_n)
                 elif bc == 2:
-                    # \int_0^L gB(x)*cos(mu_n_stag*x) dx
-                    if np.abs(cB-mu_n_stag) > abs(cB)/10000:
-                        boundary_integral = aB*sp.sin(mu_n_stag*L)/mu_n_stag + (bB*(cB-cB*sp.cos(cB*L)*sp.cos(mu_n_stag*L) - mu_n_stag*sp.sin(cB*L)*np.sin(mu_n_stag*L)))/(cB**2 - mu_n_stag**2)
-                    else:  # for special case cB = mu_n_stag we need a different solution
-                        boundary_integral = sp.sin(mu_n_stag*L)*(2*aB + bB*np.sin(mu_n_stag*L))/(2*mu_n_stag)
+                    # \int_0^L gB(x)*cos(mu_n*x) dx
+                    if np.abs(cB-mu_n) > abs(cB)/10000:
+                        boundary_integral = aB*sp.sin(mu_n*L)/mu_n + (bB*(cB-cB*sp.cos(cB*L)*sp.cos(mu_n*L) - mu_n*sp.sin(cB*L)*np.sin(mu_n*L)))/(cB**2 - mu_n**2)
+                    else:  # for special case cB = mu_n we need a different solution
+                        boundary_integral = sp.sin(mu_n*L)*(2*aB + bB*np.sin(mu_n*L))/(2*mu_n)
             elif bc_func_B == "cosine":
                 # cosine boundary term
                 # gB = aB + bB*cos(cB*y)
@@ -470,16 +526,17 @@ class ExactSolution:
                     else:
                         boundary_integral = ((2*aB + bB + bB*sp.cos(mu_n*L))*sp.sin((mu_n*L)/2)**2)/mu_n
                 elif bc == 2:
-                    if np.abs(cB-mu_n_stag) > abs(cB)/10000:
-                        boundary_integral = aB*sp.sin(mu_n_stag*L)/mu_n_stag + (bB*(cB*sp.cos(mu_n_stag*L)*sp.sin(cB*L) - mu_n_stag*sp.cos(cB*L)*sp.sin(mu_n_stag*L)))/(cB**2 - mu_n_stag**2)
-                    else:  # for special case cB = mu_n_stag we need a different solution
-                        boundary_integral = (4*aB*sp.sin(mu_n_stag*L) + bB*(2*mu_n_stag*L + sp.sin(2*mu_n_stag*L)))/(4*mu_n_stag)
+                    # \int_0^L gB(x)*cos(mu_n*x) dx
+                    if np.abs(cB-mu_n) > abs(cB)/10000:
+                        boundary_integral = aB*sp.sin(mu_n*L)/mu_n + (bB*(cB*sp.cos(mu_n*L)*sp.sin(cB*L) - mu_n*sp.cos(cB*L)*sp.sin(mu_n*L)))/(cB**2 - mu_n**2)
+                    else:  # for special case cB = mu_n we need a different solution
+                        boundary_integral = (4*aB*sp.sin(mu_n*L) + bB*(2*mu_n*L + sp.sin(2*mu_n*L)))/(4*mu_n)
             if bc == 1:
                 c_B_n = (2/L)*(1/sp.sinh(mu_n*(-H)))*boundary_integral
                 u_B = u_B + c_B_n*sp.sinh(mu_n*(y-H))*sp.sin(mu_n*x)
             elif bc == 2:
-                c_B_n = (2/L)*(1/sp.sinh(mu_n_stag*(-H)))*boundary_integral
-                u_B = u_B + c_B_n*sp.sinh(mu_n_stag*(y-H))*sp.cos(mu_n_stag*x)
+                c_B_n = (2/L)*(1/sp.sinh(mu_n*(-H)))*boundary_integral
+                u_B = u_B + c_B_n*sp.sinh(mu_n*(y-H))*sp.cos(mu_n*x)
             elif bc == 4:
                 c_B_n = -(2/L)*(1/(mu_n*sp.cosh(mu_n*(-H))))*boundary_integral
                 u_B = u_B + c_B_n*sp.sinh(mu_n*(y-H))*sp.sin(mu_n*x)
@@ -494,11 +551,11 @@ class ExactSolution:
                     else:  # for special case cT = mu_n we need a different solution
                         boundary_integral = (4*aT + 2*bT*mu_n*L - 4*aT*sp.cos(mu_n*L) - bT*sp.sin(2*mu_n*L))/(4*mu_n)
                 elif bc == 2:
-                    # \int_0^L gB(x)*cos(mu_n_stag*x) dx
-                    if np.abs(cT-mu_n_stag) > abs(cT)/10000:
-                        boundary_integral = aT*sp.sin(mu_n_stag*L)/mu_n_stag + (bT*(cT-cT*sp.cos(cT*L)*sp.cos(mu_n_stag*L) - mu_n_stag*sp.sin(cT*L)*np.sin(mu_n_stag*L)))/(cT**2 - mu_n_stag**2)
-                    else:  # for special case cB = mu_n_stag we need a different solution
-                        boundary_integral = sp.sin(mu_n_stag*L)*(2*aT + bT*np.sin(mu_n_stag*L))/(2*mu_n_stag)
+                    # \int_0^L gT(x)*cos(mu_n*x) dx
+                    if np.abs(cT-mu_n) > abs(cT)/10000:
+                        boundary_integral = aT*sp.sin(mu_n*L)/mu_n + (bT*(cT-cT*sp.cos(cT*L)*sp.cos(mu_n*L) - mu_n*sp.sin(cT*L)*np.sin(mu_n*L)))/(cT**2 - mu_n**2)
+                    else:  # for special case cB = mu_n we need a different solution
+                        boundary_integral = sp.sin(mu_n*L)*(2*aT + bT*np.sin(mu_n*L))/(2*mu_n)
             elif bc_func_T == "cosine":
                 # cosine boundary term
                 # gT = aT + bT*cos(cT*y)
@@ -509,16 +566,17 @@ class ExactSolution:
                     else:
                         boundary_integral = ((2*aT + bT + bT*sp.cos(mu_n*L))*sp.sin((mu_n*L)/2)**2)/mu_n
                 elif bc == 2:
-                    if np.abs(cT-mu_n_stag) > abs(cT)/10000:
-                        boundary_integral = aT*sp.sin(mu_n_stag*L)/mu_n_stag + (bT*(cT*sp.cos(mu_n_stag*L)*sp.sin(cT*L) - mu_n_stag*sp.cos(cT*L)*sp.sin(mu_n_stag*L)))/(cT**2 - mu_n_stag**2)
-                    else:  # for special case cT = mu_n_stag we need a different solution
-                        boundary_integral = (4*aT*sp.sin(mu_n_stag*L) + bT*(2*mu_n_stag*L + sp.sin(2*mu_n_stag*L)))/(4*mu_n_stag)
+                    # \int_0^L gT(x)*cos(mu_n*x) dx
+                    if np.abs(cT-mu_n) > abs(cT)/10000:
+                        boundary_integral = aT*sp.sin(mu_n*L)/mu_n + (bT*(cT*sp.cos(mu_n*L)*sp.sin(cT*L) - mu_n*sp.cos(cT*L)*sp.sin(mu_n*L)))/(cT**2 - mu_n**2)
+                    else:  # for special case cT = mu_n we need a different solution
+                        boundary_integral = (4*aT*sp.sin(mu_n*L) + bT*(2*mu_n*L + sp.sin(2*mu_n*L)))/(4*mu_n)
             if bc == 1:
                 c_T_n = (2/L)*(1/sp.sinh(mu_n*H))*boundary_integral
                 u_T = u_T + c_T_n*sp.sinh(mu_n*y)*sp.sin(mu_n*x)
             elif bc == 2:
-                c_T_n = (2/L)*(1/sp.sinh(mu_n_stag*H))*boundary_integral
-                u_T = u_T + c_T_n*sp.sinh(mu_n_stag*y)*sp.cos(mu_n_stag*x)
+                c_T_n = (2/L)*(1/sp.sinh(mu_n*H))*boundary_integral
+                u_T = u_T + c_T_n*sp.sinh(mu_n*y)*sp.cos(mu_n*x)
             elif bc == 5:
                 c_T_n = (2/L)*(1/(mu_n*sp.cosh(mu_n*H)))*boundary_integral
                 u_T = u_T + c_T_n*sp.sinh(mu_n*y)*sp.sin(mu_n*x)
