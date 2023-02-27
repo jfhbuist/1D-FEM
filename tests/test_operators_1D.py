@@ -309,5 +309,6 @@ def test_solution_interpolation_1D():
     assert np.square(solution.u-reference_solution).max() < 10**-8
 
 
+# For debugging purposes
 if __name__ == '__main__':
     test_solution_1D()

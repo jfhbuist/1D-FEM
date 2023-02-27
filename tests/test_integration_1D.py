@@ -100,40 +100,7 @@ def test_sadr_1D():
     assert np.square(u_fem-u_exact).mean() < 10**-5
 
 
-def test_sdr_1D():
-    pde = "steady_diffusion_reaction_1D"
-    bc_types = {
-        "left": "neumann",
-        "right": "neumann"
-    }
-    bc_params = {
-        "left": ["constant", 0],
-        "right": ["constant", 0]
-    }
-    grid_params = {
-        "L": 1,
-        "n": 100
-    }
-    core_params = {
-        "D":        1,
-        "R":        1
-    }
-    source_params = {
-        "function": "periodic",
-        "alpha":    0,
-        "beta":     1,
-        "gamma":    20
-    }
-
-    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
-                                                              core_params, source_params)
-    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
-                                                              core_params, source_params)
-
-    assert np.square(u_fem-u_exact).mean() < 10**-12
-
-
-def test_sdr_v2_1D():
+def test_sdr_1D_A():
     pde = "steady_diffusion_reaction_1D"
     bc_types = {
         "left": "neumann",
@@ -166,5 +133,39 @@ def test_sdr_v2_1D():
     assert np.square(u_fem-u_exact).mean() < 10**-9
 
 
-# if __name__ == '__main__':
-#     test_sdr_v2_1D()
+def test_sdr_1D_B():
+    pde = "steady_diffusion_reaction_1D"
+    bc_types = {
+        "left": "neumann",
+        "right": "neumann"
+    }
+    bc_params = {
+        "left": ["constant", 0],
+        "right": ["constant", 0]
+    }
+    grid_params = {
+        "L": 1,
+        "n": 100
+    }
+    core_params = {
+        "D":        1,
+        "R":        1
+    }
+    source_params = {
+        "function": "periodic",
+        "alpha":    0,
+        "beta":     1,
+        "gamma":    20
+    }
+
+    u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
+                                                              core_params, source_params)
+    u_fem, x_fem = fem.front.NumericalSolution().get_solution(pde, bc_types, bc_params, grid_params,
+                                                              core_params, source_params)
+
+    assert np.square(u_fem-u_exact).mean() < 10**-12
+
+
+# For debugging purposes
+if __name__ == '__main__':
+    test_sdr_1D_A()

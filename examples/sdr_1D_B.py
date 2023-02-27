@@ -1,38 +1,33 @@
-# laplace 1D
+# steady diffusion reaction 1D
 
 import matplotlib.pyplot as plt
 import numpy as np
 import flexible_fem as fem
 
-pde = "laplace_1D"
-# neumann bc: set value of gradient of solution normal to boundary
-# dirichlet bc: set value of solution at boundary
+# set 13
+pde = "steady_diffusion_reaction_1D"
 bc_types = {
     "left": "neumann",
-    "right": "dirichlet"
+    "right": "neumann"
 }
 bc_params = {
-    "left": ["constant", -1],
-    "right": ["constant", 2]
-    }
-# bc_types = {
-#     "left": "dirichlet",
-#     "right": "dirichlet"
-# }
-# bc_params = {
-#     "left": ["constant", 1],
-#     "right": ["constant", 1]
-#     }
+    "left": ["constant", 0],
+    "right": ["constant", 0]
+}
 grid_params = {
-    "L": 1.7,
-    "n": 139
+    "L": 1,
+    "n": 100
 }
 core_params = {
-    "D":        1.5,
+    "D":        1,
+    "R":        1
 }
 source_params = {
-    "function": "zero"
-    }
+    "function": "periodic",
+    "alpha":    0,
+    "beta":     1,
+    "gamma":    20
+}
 
 u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                           core_params, source_params)
@@ -45,6 +40,7 @@ fig = plt.figure()
 ax = fig.add_subplot()
 ax.plot(x_fem, u_fem, linewidth=5, label='fem')
 ax.plot(x_exact, u_exact, linestyle=':', linewidth=5, label='exact')
+
 
 title = pde
 ax.set_title(title, y=1.05, fontsize=14)
