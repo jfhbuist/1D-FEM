@@ -309,7 +309,7 @@ class ExactSolution:
         # general separated solution:
         # u = X(x)*Y(y)
         # we solve the boundary value problem in 4 parts
-        
+
         # Here we give the solution for the problem with four dirichlet boundaries (bc = 1)
 
         # for the left boundary, we take
@@ -409,8 +409,8 @@ class ExactSolution:
             bc = 1
         elif (bc_types["left"] == "neumann") and (bc_types["right"] == "dirichlet") and (bc_types["bottom"] == "dirichlet") and (bc_types["top"] == "dirichlet"):
             bc = 2
-        # elif (bc_types["left"] == "dirichlet") and (bc_types["right"] == "neumann") and (bc_types["bottom"] == "dirichlet") and (bc_types["top"] == "dirichlet"):
-        #     bc = 3
+        elif (bc_types["left"] == "dirichlet") and (bc_types["right"] == "neumann") and (bc_types["bottom"] == "dirichlet") and (bc_types["top"] == "dirichlet"):
+            bc = 3
         # elif (bc_types["left"] == "dirichlet") and (bc_types["right"] == "dirichlet") and (bc_types["bottom"] == "neumann") and (bc_types["top"] == "dirichlet"):
         #     bc = 4
         # elif (bc_types["left"] == "dirichlet") and (bc_types["right"] == "dirichlet") and (bc_types["bottom"] == "dirichlet") and (bc_types["top"] == "neumann"):
@@ -419,11 +419,11 @@ class ExactSolution:
             raise ValueError("This combination of boundary conditions is not implemented for the exact solution of the 2D Laplace equation.")
 
         # Initialize solutions
-        if bc == 1 or bc == 2:
-            u_L = 0
-            u_R = 0
-            u_B = 0
-            u_T = 0
+        # if bc == 1 or bc == 2:
+        u_L = 0
+        u_R = 0
+        u_B = 0
+        u_T = 0
         # elif bc == 2:
         #     u_L = 0
         #     u_R = 0
@@ -441,14 +441,14 @@ class ExactSolution:
             lambda_n = n*np.pi/H
             if bc == 1:
                 mu_n = n*np.pi/L
-            elif bc == 2:
+            elif bc == 2 or bc == 3:
                 # staggered wavelength, so cosine terms are zero at boundaries
                 mu_n = (n-1/2)*np.pi/L
 
             if bc_func_L == "sine":
                 # sine boundary term
                 # gL = aL + bL*sin(cL*y)
-                if bc == 1 or bc == 2:
+                if bc == 1 or bc == 2 or bc == 3:
                     # \int_0^H gL(y)*sin(lambda_n*y) dy
                     if np.abs(cL-lambda_n) > abs(cL)/10000:
                         boundary_integral = (aL - aL*sp.cos(lambda_n*H))/lambda_n + (bL*(lambda_n*sp.cos(lambda_n*H)*sp.sin(cL*H) - cL*sp.cos(cL*H)*sp.sin(lambda_n*H)))/(cL**2 - lambda_n**2)
@@ -458,7 +458,7 @@ class ExactSolution:
                 # cosine boundary term
                 # gL = aL + bL*cos(cL*y)
                 # \int_0^H gL(y)*sin(lambda_n*y) dy
-                if bc == 1 or bc == 2:
+                if bc == 1 or bc == 2 or bc == 3:
                     if np.abs(cL-lambda_n) > abs(cL)/10000:
                         boundary_integral = (aL - aL*sp.cos(lambda_n*H))/lambda_n + (bL*(-lambda_n + lambda_n*sp.cos(cL*H)*sp.cos(lambda_n*H) + cL*sp.sin(cL*H)*sp.sin(lambda_n*H)))/(cL**2 - lambda_n**2)
                     else:
@@ -476,7 +476,7 @@ class ExactSolution:
             if bc_func_R == "sine":
                 # sine boundary term
                 # gR = aR + bR*sin(cR*y)
-                if bc == 1 or bc == 2:
+                if bc == 1 or bc == 2 or bc == 3:
                     # \int_0^H gR(y)*sin(lambda_n*y) dy
                     if np.abs(cR-lambda_n) > abs(cR)/10000:
                         boundary_integral = (aR - aR*sp.cos(lambda_n*H))/lambda_n + (bR*(lambda_n*sp.cos(lambda_n*H)*sp.sin(cR*H) - cR*sp.cos(cR*H)*sp.sin(lambda_n*H)))/(cR**2 - lambda_n**2)
@@ -485,7 +485,7 @@ class ExactSolution:
             elif bc_func_R == "cosine":
                 # cosine boundary term
                 # gR = aR + bR*cos(cR*y)
-                if bc == 1 or bc == 2:
+                if bc == 1 or bc == 2 or bc == 3:
                     # \int_0^H gR(y)*sin(lambda_n*y) dy
                     if np.abs(cR-lambda_n) > abs(cR)/10000:
                         boundary_integral = (aR - aR*sp.cos(lambda_n*H))/lambda_n + (bR*(-lambda_n + lambda_n*sp.cos(cR*H)*sp.cos(lambda_n*H) + cR*sp.sin(cR*H)*sp.sin(lambda_n*H)))/(cR**2 - lambda_n**2)
@@ -504,7 +504,7 @@ class ExactSolution:
             if bc_func_B == "sine":
                 # sine boundary term
                 # gB = aB + bB*sin(cB*x)
-                if bc == 1:
+                if bc == 1 or bc == 3:
                     # \int_0^L gB(x)*sin(mu_n*x) dx
                     if np.abs(cB-mu_n) > abs(cB)/10000:
                         boundary_integral = (aB - aB*sp.cos(mu_n*L))/mu_n + (bB*(mu_n*sp.cos(mu_n*L)*sp.sin(cB*L) - cB*sp.cos(cB*L)*sp.sin(mu_n*L)))/(cB**2 - mu_n**2)
@@ -519,7 +519,7 @@ class ExactSolution:
             elif bc_func_B == "cosine":
                 # cosine boundary term
                 # gB = aB + bB*cos(cB*y)
-                if bc == 1:
+                if bc == 1 or bc == 3:
                     # \int_0^L gB(x)*sin(mu_n*x) dx
                     if np.abs(cB-mu_n) > abs(cB)/10000:
                         boundary_integral = (aB - aB*sp.cos(mu_n*L))/mu_n + (bB*(-mu_n + mu_n*sp.cos(cB*L)*sp.cos(mu_n*L) + cB*sp.sin(cB*L)*sp.sin(mu_n*L)))/(cB**2 - mu_n**2)
@@ -531,7 +531,7 @@ class ExactSolution:
                         boundary_integral = aB*sp.sin(mu_n*L)/mu_n + (bB*(cB*sp.cos(mu_n*L)*sp.sin(cB*L) - mu_n*sp.cos(cB*L)*sp.sin(mu_n*L)))/(cB**2 - mu_n**2)
                     else:  # for special case cB = mu_n we need a different solution
                         boundary_integral = (4*aB*sp.sin(mu_n*L) + bB*(2*mu_n*L + sp.sin(2*mu_n*L)))/(4*mu_n)
-            if bc == 1:
+            if bc == 1 or bc == 3:
                 c_B_n = (2/L)*(1/sp.sinh(mu_n*(-H)))*boundary_integral
                 u_B = u_B + c_B_n*sp.sinh(mu_n*(y-H))*sp.sin(mu_n*x)
             elif bc == 2:
@@ -544,7 +544,7 @@ class ExactSolution:
             if bc_func_T == "sine":
                 # sine boundary term
                 # gT = aT + bT*sin(cT*x)
-                if bc == 1:
+                if bc == 1 or bc == 3:
                     # \int_0^L gT(x)*sin(mu_n*x) dx
                     if np.abs(cT-mu_n) > abs(cT)/10000:
                         boundary_integral = (aT - aT*sp.cos(mu_n*L))/mu_n + (bT*(mu_n*sp.cos(mu_n*L)*sp.sin(cT*L) - cT*sp.cos(cT*L)*sp.sin(mu_n*L)))/(cT**2 - mu_n**2)
@@ -559,7 +559,7 @@ class ExactSolution:
             elif bc_func_T == "cosine":
                 # cosine boundary term
                 # gT = aT + bT*cos(cT*y)
-                if bc == 1:
+                if bc == 1 or bc == 3:
                     # \int_0^L gT(x)*sin(mu_n*x) dx
                     if np.abs(cT-mu_n) > abs(cT)/10000:
                         boundary_integral = (aT - aT*sp.cos(mu_n*L))/mu_n + (bT*(-mu_n + mu_n*sp.cos(cT*L)*sp.cos(mu_n*L) + cT*sp.sin(cT*L)*sp.sin(mu_n*L)))/(cT**2 - mu_n**2)
@@ -571,7 +571,7 @@ class ExactSolution:
                         boundary_integral = aT*sp.sin(mu_n*L)/mu_n + (bT*(cT*sp.cos(mu_n*L)*sp.sin(cT*L) - mu_n*sp.cos(cT*L)*sp.sin(mu_n*L)))/(cT**2 - mu_n**2)
                     else:  # for special case cT = mu_n we need a different solution
                         boundary_integral = (4*aT*sp.sin(mu_n*L) + bT*(2*mu_n*L + sp.sin(2*mu_n*L)))/(4*mu_n)
-            if bc == 1:
+            if bc == 1 or bc == 3:
                 c_T_n = (2/L)*(1/sp.sinh(mu_n*H))*boundary_integral
                 u_T = u_T + c_T_n*sp.sinh(mu_n*y)*sp.sin(mu_n*x)
             elif bc == 2:

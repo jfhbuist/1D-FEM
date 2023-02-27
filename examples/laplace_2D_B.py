@@ -5,18 +5,18 @@ import numpy as np
 import flexible_fem as fem
 
 pde = "laplace_2D"
-bc_types = {
-    "left": "neumann",
-    "right": "dirichlet",
-    "bottom": "dirichlet",
-    "top": "dirichlet",
-}
 # bc_types = {
-#     "left": "dirichlet",
-#     "right": "neumann",
+#     "left": "neumann",
+#     "right": "dirichlet",
 #     "bottom": "dirichlet",
 #     "top": "dirichlet",
 # }
+bc_types = {
+    "left": "dirichlet",
+    "right": "neumann",
+    "bottom": "dirichlet",
+    "top": "dirichlet",
+}
 # bc_types = {
 #     "left": "dirichlet",
 #     "right": "dirichlet",
@@ -53,9 +53,15 @@ grid_params = {
 #     "bottom": ["sine", 0, 1, np.pi/(grid_params["L"]), 0, 0],  # g(x) = a + b*sin(c*x)
 #     "top": ["sine", 0, 1, np.pi/(grid_params["L"]), 0, 0],  # g(x) = a + b*sin(c*x)
 # }
+# bc_params = {
+#     "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
+#     "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+#     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+#     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+# }
 bc_params = {
-    "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
-    "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+    "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+    "right": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
 }
