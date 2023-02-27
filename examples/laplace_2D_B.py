@@ -11,24 +11,24 @@ pde = "laplace_2D"
 #     "bottom": "dirichlet",
 #     "top": "dirichlet",
 # }
-bc_types = {
-    "left": "dirichlet",
-    "right": "neumann",
-    "bottom": "dirichlet",
-    "top": "dirichlet",
-}
+# bc_types = {
+#     "left": "dirichlet",
+#     "right": "neumann",
+#     "bottom": "dirichlet",
+#     "top": "dirichlet",
+# }
 # bc_types = {
 #     "left": "dirichlet",
 #     "right": "dirichlet",
 #     "bottom": "neumann",
 #     "top": "dirichlet",
 # }
-# bc_types = {
-#     "left": "dirichlet",
-#     "right": "dirichlet",
-#     "bottom": "dirichlet",
-#     "top": "neumann",
-# }
+bc_types = {
+    "left": "dirichlet",
+    "right": "dirichlet",
+    "bottom": "dirichlet",
+    "top": "neumann",
+}
 # grid_params = {
 #     "L": 1,
 #     "H": 1,
@@ -42,27 +42,27 @@ grid_params = {
     "ny": 30
 }
 # bc_params = {
-#     "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+#     "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
 #     "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+#     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+#     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+# }
+# bc_params = {
+#     "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+#     "right": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
 #     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
 #     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
 # }
 # bc_params = {
 #     "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
 #     "right": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
-#     "bottom": ["sine", 0, 1, np.pi/(grid_params["L"]), 0, 0],  # g(x) = a + b*sin(c*x)
-#     "top": ["sine", 0, 1, np.pi/(grid_params["L"]), 0, 0],  # g(x) = a + b*sin(c*x)
-# }
-# bc_params = {
-#     "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
-#     "right": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
 #     "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
-#     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+#     "top": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(x) = a + b*sin(c*x)
 # }
 bc_params = {
-    "left": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(y) = a + b*sin(c*y)
+    "left": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
     "right": ["sine", 0, 0, 0, 0, 0],  # g(y) = a + b*sin(c*y)
-    "bottom": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
+    "bottom": ["sine", 0, 1, np.pi/(grid_params["H"]), 0, 0],  # g(x) = a + b*sin(c*x)
     "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
 }
 core_params = {

@@ -7,14 +7,14 @@ This is a one- or two-dimensional standard Galerkin finite element code.
 It can solve steady state scalar equations, including advection, diffusion, and reaction operators, along with source terms.
 Implemented boundary conditions include inhomogeneous Dirichlet and inhomogeneous Neumann boundary conditions. 
 
-To use this package, first install it (in a virtual environment):
+To use this package, first install it (in a python virtual environment):
 ```
 pip install git+https://github.com/jfhbuist/flexible-fem.git
 ```
 
 Next, download and run one of the examples:
 ```
-python examples/laplace_2D.py
+python examples/laplace_2D_A.py
 ```
 
 These examples can be modified to use different parameters and boundary conditions.
