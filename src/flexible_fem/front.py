@@ -250,6 +250,10 @@ class NumericalSolution:
 
     def laplace_2D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         """Laplace equation: - D*(u_xx + u_yy) = 0"""
+
+        # weak form:
+        # - <n dot D*grad(u),v>_Gamma + <D*grad(u),grad(v)>_Omega = 0
+
         D = core_params["D"]
         L = grid_params["L"]
         nx = grid_params["nx"]

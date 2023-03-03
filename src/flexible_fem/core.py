@@ -201,15 +201,10 @@ class Discretization:
         # jacobian = np.matmul(vert_coords, self.dphidxieta)
         return jacobian
 
-    def coordinate_transformation(self, vert_coords, function_xy, boundary=False):
+    def coordinate_transformation(self, vert_coords, function_xy):
         """Transform function of xy to function of xieta."""
-        if boundary:
-            dim = self.dim - 1
-        else:
-            dim = self.dim
-        if dim == 0:
-            function_xieta = function_xy
-        elif dim == 1:
+        dim = self.dim
+        if dim == 1:
             function_xieta = self.coordinate_transformation_line(vert_coords, function_xy)
         elif dim == 2:
             function_xieta = self.coordinate_transformation_triangle(vert_coords, function_xy)
@@ -242,6 +237,41 @@ class Discretization:
                                         y0*phi[0](xieta)+y1*phi[1](xieta)+y2*phi[2](xieta)
                                         ])
         return function_xieta
+
+    def coordinate_transformation_bound(self, vert_coords, function_xy):
+        """Transform function of xy to function of xieta, on boundary element."""
+        dim = self.dim
+        if dim == 1:
+            function_tau, det = self.coordinate_transformation_1D_bound(vert_coords, function_xy)
+        elif dim == 2:
+            function_tau, det = self.coordinate_transformation_2D_bound(vert_coords, function_xy)
+        return function_tau, det
+
+    def coordinate_transformation_1D_bound(self, vert_coords, function_xy):
+        """For a boundary element in a 1D domain, transform 1D function of x to a 0D function of
+        nothing."""
+        # No real coordinate transformation necessary, just evaluate function at boundary point
+        x0 = vert_coords[0]
+        function_tau = lambda tau: function_xy([x0])
+        det = 1
+        return function_tau, det
+
+    def coordinate_transformation_2D_bound(self, vert_coords, function_xy):
+        """For a boundary element in a 2D domain, transform 2D function of xy to a 1D function of
+        tau."""
+        # Use boundary shape functions (for line element)
+        # Use x = x0+tau*(x1-x0) = x0*phi[0](tau)+x1*phi[1](tau)
+        # and y = y0+tau*(y1-y0) = y0*phi[0](tau)+y1*phi[1](tau)
+        phi = self.basis_functions_bound
+        x0 = vert_coords[0, 0]
+        y0 = vert_coords[0, 1]
+        x1 = vert_coords[1, 0]
+        y1 = vert_coords[1, 1]
+        function_tau = lambda tau: function_xy([x0*phi[0](tau)+x1*phi[1](tau),
+                                                y0*phi[0](tau)+y1*phi[1](tau)])
+        # To integrate over tau we need to multiply by the following
+        det = np.sqrt((x1-x0)**2 + (y1-y0)**2)
+        return function_tau, det
 
     def coordinate_transformation_inverse(self, vert_coords, function_xieta):
         """Transform function of xieta to function of xy."""
@@ -523,13 +553,11 @@ class NaturalBoundary():
         # get bc
         bc_type = bc_types[lb]
         bc_function = bc_functions[lb]
-        # transform bc_function to function of xieta
-        bc_function_xieta = discretization.coordinate_transformation(vert_coords, bc_function, boundary=True)
         # get test functions
         test_functions_bound = discretization.test_functions_bound
         b_elem = np.zeros(len(test_functions_bound))
         for j, test_function in enumerate(test_functions_bound):  # loop over test functions
-            integrand = self.generate_boundary_integrand(test_function, vert_coords, bc_type, bc_function_xieta)
+            integrand = self.generate_boundary_integrand(test_function, vert_coords, bc_type, bc_function)
             # integrate over element and put in element vector
             b_elem[j] = discretization.integrate_element(integrand, True)
         return b_elem
@@ -579,10 +607,11 @@ class Diffusion(SolutionOperator, NaturalBoundary):
         # Since we reduce the order of the diffusion operator through integration by parts,
         # boundary terms appear, which must be added to the equation.
         # since this term will be added to right-hand side, it gets a minus sign
-        # discretization = self.discretization
+        discretization = self.discretization
+        # transform bc_function to function of xieta
+        bc_function_xieta, det = discretization.coordinate_transformation_bound(vert_coords, bc_function)
         if bc_type == "neumann":
-            # in 1D case there is nothing to integrate, test function at boundary is just 1
-            integrand = lambda xieta: self.coeff*bc_function(xieta)*test_function(xieta)
+            integrand = lambda xieta: self.coeff*bc_function_xieta(xieta)*test_function(xieta)*det
         else:
             integrand = lambda xieta: 0
         return integrand
