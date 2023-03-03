@@ -14,7 +14,7 @@ bc_types = {
 # grid_params = {
 #     "L": 1,
 #     "H": 1,
-#     "nx": 4,
+#     "nx": 6,
 #     "ny": 6
 # }
 grid_params = {
