@@ -4,7 +4,7 @@
 # flexible-fem
 
 This is a one- or two-dimensional standard Galerkin finite element code.
-It can solve steady state scalar equations, including advection, diffusion, and reaction operators, along with source terms.
+It can solve steady state scalar partial differential equations, including advection, diffusion, and reaction operators, along with source terms.
 Implemented boundary conditions include inhomogeneous Dirichlet and inhomogeneous Neumann boundary conditions. 
 
 To use this package, first install it (in a python virtual environment):
