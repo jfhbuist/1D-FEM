@@ -17,7 +17,7 @@
 - Make integrand calculation dimension-independent
 - Define bc functions in front
 - Fix 2D integration so it is over triangle instead of square
-- Solution reconstruction was broken. The check if a point was in a certain element was incorrect: it actually checked if a point was in a square twice the size of the triangle. Fix this.
+- Fix solution reconstruction. The check if a point was in a certain element was incorrect: it actually checked if a point was in a square twice the size of the triangle.
 - Make FEM multidimensional (2D) - create grid, check boundary conditions, implement Laplace_2D test case
 - Cleanup commented and unnecessary code
 - Expand Laplace 2D exact calculation to Neumann boundary conditions
@@ -25,24 +25,24 @@
 
 ## Todo
    
-- Rewrite natural boundary implementation to use coordinate transformation and intgration of the element corresponding to the boundary element?
+- Rewrite natural boundary implementation to use coordinate transformation and integration of the element corresponding to the boundary element?
 - Separate grid generation: save a grid after it is generated. Add a matrix (vector) linking boundary elements to proper elements.
 - Add more exact solutions for 2D Laplace with Neumann BC
 - Refactoring: check that natural boundary terms, source terms, and stiffness matrix construction follow the same pattern
 - Add more tests for 2D
 - Use problems from SCPDE as test cases
-- Check which part of code is slow and make it more efficient. Replace python arrays by numpy arrays and vectorize code?
+- Check which part of code is slow and make it more efficient. Replace more python arrays by numpy arrays and vectorize code more?
 - Merge source and natural boundary operators?
 - Add test cases from literature
-- Add mass matrix for time derivative
+- Add mass matrix for time derivative, and add time integration
 - Add exact solution to (time-dependent) heat equation
-- Generalize to non-uniform grids 
+- Test code for non-uniform grids 
 - Add stiffness matrix for nonlinear advection operator
 - Implement varying D, R, A, and put D inside derivative
 - Coordinate_transformation_inverse can be replaced by just defining dimensional basis functions (could make code more efficient?)
 - Define vertex basis functions (in addition to elements)? Could be useful for solution reconstruction.
 - Change method of solution reconstruction. Construct global solution as a function, by taking the sum of each basis function, multiplied with its coefficient. 
-- Give code better header and name
+- Give code better headers
 - Improve docstrings and add automatic documentation 
 - Implement systematic calculation of stiffness matrix and source vector using constraints on basis functions
 
