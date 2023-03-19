@@ -24,7 +24,7 @@ bc_params = {
     "top": ["constant", 1],
 }
 core_params = {
-    "D": ["constant", 1],
+    "D": ["constant", -1],
     "R": ["exponential", 3]
 }
 source_params = {
@@ -38,7 +38,7 @@ L = grid_params["L"]
 H = grid_params["H"]
 nx = grid_params["nx"]
 ny = grid_params["ny"]
-title1 = pde + " numerical"
+title1 = "thermal explosion"
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(projection='3d')

@@ -45,6 +45,7 @@
 - Give code better headers
 - Improve docstrings and add automatic documentation 
 - Implement systematic calculation of stiffness matrix and source vector using constraints on basis functions
+- Fix the way boundary conditions deal with corners in 2D (eg. determine whether left or bottom boundary sets corner value between the two)
 
 ## Literature
 

@@ -49,7 +49,7 @@ def test_sad_1D():
     core_params = {
         "A": ["constant", 1],
         "D": ["constant", 0.01],
-        "R": ["constant", 0]
+        "R": ["linear", 0]
     }
     source_params = {
         "f": ["periodic", 0, 0, 20]
@@ -80,7 +80,7 @@ def test_sadr_1D():
     core_params = {
         "A": ["constant", 0.5],
         "D": ["constant", 0.01],
-        "R": ["constant", 1.3]
+        "R": ["linear", 1.3]
     }
     source_params = {
         "f": ["periodic", 0.8, 3.5, 30]
@@ -110,7 +110,7 @@ def test_sdr_1D_A():
     }
     core_params = {
         "D": ["constant", 1],
-        "R": ["constant", 0.8]
+        "R": ["linear", 0.8]
     }
     source_params = {
         "f": ["periodic", 2.5, 2, 5]
@@ -140,7 +140,7 @@ def test_sdr_1D_B():
     }
     core_params = {
         "D": ["constant", 1],
-        "R": ["constant", 1]
+        "R": ["linear", 1]
     }
     source_params = {
         "f": ["periodic", 0, 1, 20]

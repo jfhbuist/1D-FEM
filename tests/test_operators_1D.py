@@ -83,7 +83,7 @@ def test_reaction_1D():
                                 [0.0,         0.0,         0.0,         0.03333333,  0.06666667]
                                 ])
 
-    R = 0.8
+    R = lambda u: 0.8*u
     L = 1
     n = 5
     bc_types = {
@@ -202,7 +202,7 @@ def test_solution_1D():
     # Diffusion-reaction equation (aka Helmholtz equation):
     # -D*u_xx + R*u = f
     D = 1
-    R = 0.8
+    R = lambda u: 0.8*u
     L = 1
     n = 5
     alpha = 0.5
@@ -260,7 +260,7 @@ def test_solution_interpolation_1D():
     # Diffusion-reaction equation (aka Helmholtz equation):
     # -D*u_xx + R*u = f
     D = 1
-    R = 0.8
+    R = lambda u: 0.8*u
     L = 1
     n = 23
     alpha = 0.5

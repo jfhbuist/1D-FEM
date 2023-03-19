@@ -84,17 +84,17 @@ class Grid:
             xy_bound[b_idx] = (xy_vert[belmat[b_idx, 0]] + xy_vert[belmat[b_idx, 1]])/2
             loc_bound.append("left")
             b_idx += 1
-        for j in range(ny-1):  # right
-            belmat[b_idx, 0] = (nx-1)*ny + j
-            belmat[b_idx, 1] = (nx-1)*ny + j + 1
-            xy_bound[b_idx] = (xy_vert[belmat[b_idx, 0]] + xy_vert[belmat[b_idx, 1]])/2
-            loc_bound.append("right")
-            b_idx += 1
         for i in range(nx-1):  # bottom
             belmat[b_idx, 0] = 0 + i*ny
             belmat[b_idx, 1] = 0 + i*ny + ny
             xy_bound[b_idx] = (xy_vert[belmat[b_idx, 0]] + xy_vert[belmat[b_idx, 1]])/2
             loc_bound.append("bottom")
+            b_idx += 1
+        for j in range(ny-1):  # right
+            belmat[b_idx, 0] = (nx-1)*ny + j
+            belmat[b_idx, 1] = (nx-1)*ny + j + 1
+            xy_bound[b_idx] = (xy_vert[belmat[b_idx, 0]] + xy_vert[belmat[b_idx, 1]])/2
+            loc_bound.append("right")
             b_idx += 1
         for i in range(nx-1):  # top
             belmat[b_idx, 0] = ny-1 + i*ny
@@ -632,7 +632,7 @@ class Reaction(SolutionOperator, NaturalBoundary):
 
     def generate_integrand(self, test_function, basis_function, dvjdxy, dphikdxy, det, vert_coords):
         """Generate integrand for reaction."""
-        integrand = lambda xieta: self.coeff*test_function(xieta)*basis_function(xieta)*det
+        integrand = lambda xieta: self.coeff(basis_function(xieta))*test_function(xieta)*det
         return integrand
 
     def generate_boundary_integrand(self, test_function, vert_coords, bc_type, bc_function):

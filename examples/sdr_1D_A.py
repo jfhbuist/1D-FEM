@@ -21,7 +21,7 @@ grid_params = {
 }
 core_params = {
     "D": ["constant", 1],
-    "R": ["constant", 0.8]
+    "R": ["linear", 0.8]
 }
 source_params = {
     "f": ["periodic", 2.5, 2, 5]

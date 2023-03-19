@@ -42,8 +42,8 @@ class NumericalSolution:
 
         if core_params["D"][0] == "constant":
             D = core_params["D"][1]
-        if core_params["R"][0] == "constant":
-            R = core_params["R"][1]
+        if core_params["R"][0] == "linear":
+            R = lambda u: core_params["R"][1]*u
 
         if source_params["f"][0] == "periodic":
             # periodic source term:
@@ -112,8 +112,8 @@ class NumericalSolution:
 
         if core_params["D"][0] == "constant":
             D = core_params["D"][1]
-        if core_params["R"][0] == "constant":
-            R = lambda u: core_params["R"][1]
+        if core_params["R"][0] == "linear":
+            R = lambda u: core_params["R"][1]*u
         elif core_params["R"][0] == "exponential":
             R = lambda u: core_params["R"][1]*np.exp(u)
 
@@ -177,8 +177,8 @@ class NumericalSolution:
             A = core_params["A"][1]
         if core_params["D"][0] == "constant":
             D = core_params["D"][1]
-        if core_params["R"][0] == "constant":
-            R = core_params["R"][1]
+        if core_params["R"][0] == "linear":
+            R = lambda u: core_params["R"][1]*u
 
         if source_params["f"][0] == "periodic":
             # periodic source term:
