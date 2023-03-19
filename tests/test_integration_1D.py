@@ -18,11 +18,11 @@ def test_laplace_1D():
         "n": 139
     }
     core_params = {
-        "D":        1.5,
+        "D": ["constant", 1.5]
     }
     source_params = {
-        "function": "zero"
-        }
+        "f": ["constant", 0]
+    }
 
     u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
                                                               core_params, source_params)
@@ -47,15 +47,12 @@ def test_sad_1D():
         "n": 100
     }
     core_params = {
-        "A":        1,
-        "D":        0.01,
-        "R":        0
+        "A": ["constant", 1],
+        "D": ["constant", 0.01],
+        "R": ["constant", 0]
     }
     source_params = {
-        "function": "periodic",
-        "alpha":    0,
-        "beta":     0,
-        "gamma":    20
+        "f": ["periodic", 0, 0, 20]
     }
 
     u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
@@ -81,15 +78,12 @@ def test_sadr_1D():
         "n": 139
     }
     core_params = {
-        "A":        0.5,
-        "D":        0.01,
-        "R":        1.3
+        "A": ["constant", 0.5],
+        "D": ["constant", 0.01],
+        "R": ["constant", 1.3]
     }
     source_params = {
-        "function": "periodic",
-        "alpha":    0.8,
-        "beta":     3.5,
-        "gamma":    30
+        "f": ["periodic", 0.8, 3.5, 30]
         }
 
     u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
@@ -115,14 +109,11 @@ def test_sdr_1D_A():
         "n": 100
     }
     core_params = {
-        "D":        1,
-        "R":        0.8
+        "D": ["constant", 1],
+        "R": ["constant", 0.8]
     }
     source_params = {
-        "function": "periodic",
-        "alpha":    2.5,
-        "beta":     2,
-        "gamma":    5
+        "f": ["periodic", 2.5, 2, 5]
     }
 
     u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
@@ -148,14 +139,11 @@ def test_sdr_1D_B():
         "n": 100
     }
     core_params = {
-        "D":        1,
-        "R":        1
+        "D": ["constant", 1],
+        "R": ["constant", 1]
     }
     source_params = {
-        "function": "periodic",
-        "alpha":    0,
-        "beta":     1,
-        "gamma":    20
+        "f": ["periodic", 0, 1, 20]
     }
 
     u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,

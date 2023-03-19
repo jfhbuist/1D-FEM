@@ -24,10 +24,10 @@ def test_laplace_2D_A():
         "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
     }
     core_params = {
-        "D":        1
+        "D": ["constant", 1]
     }
     source_params = {
-        "function": "zero",
+        "f": ["constant", 0]
     }
 
     u_exact, x_exact, y_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params,
@@ -59,10 +59,10 @@ def test_laplace_2D_B():
         "top": ["sine", 0, 0, 0, 0, 0],  # g(x) = a + b*sin(c*x)
     }
     core_params = {
-        "D":        1.3
+        "D": ["constant", 1.3]
     }
     source_params = {
-        "function": "zero",
+        "f": ["constant", 0]
     }
 
     u_exact, x_exact, y_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params,

@@ -36,10 +36,10 @@ bc_params = {
 #     "top": ["quadratic", 1, 0, 0, 0, 0],  # g(x) = a + b*(y-c) + d*(y-e)^2
 # }
 core_params = {
-    "D":        1
+    "D": ["constant", 1]
 }
 source_params = {
-    "function": "zero",
+    "f": ["constant", 0]
 }
 
 u_exact, x_exact, y_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params,

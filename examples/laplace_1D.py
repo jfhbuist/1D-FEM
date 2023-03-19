@@ -28,10 +28,10 @@ grid_params = {
     "n": 139
 }
 core_params = {
-    "D":        1.5,
+    "D": ["constant", 1.5]
 }
 source_params = {
-    "function": "zero"
+    "f": ["constant", 0]
     }
 
 u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,

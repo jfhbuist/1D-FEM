@@ -64,13 +64,13 @@ class ExactSolution:
 
     def steady_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params, core_params, source_params):
         """Diffusion-reaction equation (aka Helmholtz equation): -D*u_xx + R*u = f"""
-        D = core_params["D"]
-        R = core_params["R"]
+        D = core_params["D"][1]
+        R = core_params["R"][1]
         L = grid_params["L"]
-        source_function = source_params["function"]
-        alpha = source_params["alpha"]
-        beta = source_params["beta"]
-        gamma = source_params["gamma"]
+        source_function = source_params["f"][0]
+        alpha = source_params["f"][1]
+        beta = source_params["f"][2]
+        gamma = source_params["f"][3]
 
         # see chapter 6, Riley & Hobson (2011)
         # x is our symbolic spatial variable:
@@ -101,14 +101,14 @@ class ExactSolution:
     def steady_advection_diffusion_reaction_1D(self, dim, bc_types, bc_params, grid_params,
                                                core_params, source_params):
         """Advection-diffusion-reaction equation: A*u_x - D*u_xx + R*u = f"""
-        A = core_params["A"]
-        D = core_params["D"]
-        R = core_params["R"]
+        A = core_params["A"][1]
+        D = core_params["D"][1]
+        R = core_params["R"][1]
         L = grid_params["L"]
-        source_function = source_params["function"]
-        alpha = source_params["alpha"]
-        beta = source_params["beta"]
-        gamma = source_params["gamma"]
+        source_function = source_params["f"][0]
+        alpha = source_params["f"][1]
+        beta = source_params["f"][2]
+        gamma = source_params["f"][3]
 
         # see chapter 6, Riley & Hobson (2011)
         # x is our symbolic spatial variable:
@@ -143,13 +143,13 @@ class ExactSolution:
     def steady_advection_diffusion_1D(self, dim, bc_types, bc_params, grid_params,
                                       core_params, source_params):
         """Advection-diffusion equation: A*u_x - D*u_xx = f"""
-        A = core_params["A"]
-        D = core_params["D"]
+        A = core_params["A"][1]
+        D = core_params["D"][1]
         L = grid_params["L"]
-        source_function = source_params["function"]
-        alpha = source_params["alpha"]
-        beta = source_params["beta"]
-        gamma = source_params["gamma"]
+        source_function = source_params["f"][0]
+        alpha = source_params["f"][1]
+        beta = source_params["f"][2]
+        gamma = source_params["f"][3]
 
         # see chapter 6, Riley & Hobson (2011)
         # x is our symbolic spatial variable:

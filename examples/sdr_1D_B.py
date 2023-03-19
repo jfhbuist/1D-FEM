@@ -19,14 +19,11 @@ grid_params = {
     "n": 100
 }
 core_params = {
-    "D":        1,
-    "R":        1
+    "D": ["constant", 1],
+    "R": ["constant", 1]
 }
 source_params = {
-    "function": "periodic",
-    "alpha":    0,
-    "beta":     1,
-    "gamma":    20
+    "f": ["periodic", 0, 1, 20]
 }
 
 u_exact, x_exact = fem.exact.ExactSolution().get_solution(pde, bc_types, bc_params, grid_params,
