@@ -4,8 +4,8 @@ exclude =
     __pycache__,
     .venv,
     .pytest_cache
-max-line-length = 99
-extend-ignore = E501, E731, F841, E201, E202, E128
+max-line-length = 120
+extend-ignore = E731, F841, E201, E202, E128
 # E501: Line too long
 # E731: Do not assign a lambda expression, use a def
 # F841: Local variable is assigned to but never used
